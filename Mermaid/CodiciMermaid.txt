@@ -1,0 +1,347 @@
+*LIVELLI*
+flowchart TB
+    subgraph Presentation
+        A[Blazor Pages / Razor Components]
+    end
+    subgraph API
+        B[Controller API]
+    end
+    subgraph BusinessLogic
+        C[Services]
+    end
+    subgraph DataAccess
+        D[ApplicationDbContext / Entità]
+    end
+    subgraph Database
+        E[SQL Server Database]
+    end
+
+    A --> B --> C --> D --> E
+
+----------------------------------------------
+
+*CLIENTE*
+sequenceDiagram
+    autonumber
+    participant Cliente
+    participant UI as "Blazor UI"
+    participant Service as "Service Layer"
+    participant DB as "Database"
+    participant Email as "Email Service"
+
+    Note over Cliente,UI: Cliente autenticato, nella Dashboard
+
+    alt Gestione Veicoli
+        Cliente->>UI: Seleziona "Gestione Veicoli"
+        UI->>Service: GetVehiclesByUser(userId)
+        Service->>DB: SELECT veicoli WHERE UserId=userId
+        DB-->>Service: Lista veicoli
+        Service-->>UI: Lista<VeicoloDto>
+        UI-->>Cliente: Mostra elenco veicoli
+
+        Cliente->>UI: Clicca "Aggiungi Veicolo"
+        UI->>Service: AddVehicle(dto, userId)
+        Service->>DB: INSERT nuovo veicolo
+        DB-->>Service: OK
+        Service-->>UI: VeicoloDto creato
+        UI-->>Cliente: Mostra conferma
+
+        Cliente->>UI: Clicca "Elimina Veicolo"
+        UI->>Service: DeleteVehicle(veicoloId, userId)
+        Service->>DB: DELETE veicolo
+        DB-->>Service: OK
+        Service-->>UI: Success
+        UI-->>Cliente: Aggiorna lista veicoli
+    end
+
+    alt Prenota Appuntamento
+        Cliente->>UI: Seleziona "Prenota Appuntamento"
+        UI->>Service: CheckAvailability(servizioId, dataOra)
+        Service->>DB: Conta appuntamenti in fascia
+        DB-->>Service: Disponibilità OK/No
+        alt Disponibile
+            Service-->>UI: Disponibilità=true
+            UI->>Service: CreateAppointment(dto, userId)
+            Service->>DB: INSERT appuntamento
+            DB-->>Service: Nuovo appuntamento
+            Service->>Email: Invia notifica al meccanico
+            Service-->>UI: AppuntamentoDto
+            UI-->>Cliente: Mostra conferma prenotazione
+        else Non disponibile
+            Service-->>UI: Disponibilità=false
+            UI-->>Cliente: Mostra "Orario non disponibile"
+        end
+    end
+
+    alt Visualizza Preventivi
+        Cliente->>UI: Seleziona "Preventivi"
+        UI->>Service: GetQuotesForCustomer(userId)
+        Service->>DB: SELECT preventivi WHERE ClientId=userId
+        DB-->>Service: Lista preventivi
+        Service-->>UI: Lista<PreventivoDto>
+        UI-->>Cliente: Mostra elenco preventivi
+
+        Cliente->>UI: Clicca "Approva" su Preventivo
+        UI->>Service: ApproveQuote(preventivoId, userId)
+        Service->>DB: UPDATE preventivi SET stato="Approvato"
+        DB-->>Service: OK
+        Service->>Email: Invia notifica al meccanico
+        Service-->>UI: PreventivoDto aggiornato
+        UI-->>Cliente: Mostra conferma
+    end
+
+    alt Visualizza Storico Interventi
+        Cliente->>UI: Seleziona "Storico Interventi"
+        UI->>Service: GetVehiclesByUser(userId)
+        Service->>DB: SELECT veicoli WHERE UserId=userId
+        DB-->>Service: Lista veicoli
+        Service-->>UI: Lista<VeicoloDto>
+        UI-->>Cliente: Mostra dropdown veicoli
+
+        Cliente->>UI: Sceglie Veicolo e clicca "Mostra Storico"
+        UI->>Service: GetRepairsForVehicle(veicoloId)
+        Service->>DB: SELECT riparazioni WHERE VeicoloId=veicoloId
+        DB-->>Service: Lista riparazioni
+        Service-->>UI: Lista<RiparazioneDto>
+        UI-->>Cliente: Mostra storico riparazioni
+    end
+
+    alt Gestione Profilo
+        Cliente->>UI: Seleziona "Profilo"
+        UI->>Service: GetUserById(userId)
+        Service->>DB: SELECT * FROM Users WHERE Id=userId
+        DB-->>Service: UserEntity
+        Service-->>UI: UserDto
+        UI-->>Cliente: Mostra form dati personali
+
+        Cliente->>UI: Modifica e salva
+        UI->>Service: UpdateUser(userId, userDto)
+        Service->>DB: UPDATE Users SET ...
+        DB-->>Service: OK
+        Service-->>UI: UserDto aggiornato
+        UI-->>Cliente: Mostra conferma
+    end
+
+------------------------------------------
+
+*MECCANICO*
+sequenceDiagram
+    autonumber
+    participant Meccanico
+    participant UI as "Blazor UI"
+    participant AppService as "AppointmentService"
+    participant RepairService
+    participant PreventivoService
+    participant VeicoloService
+    participant DB as "Database"
+    participant Email as "Email Service"
+
+    Note over Meccanico,UI: Meccanico autenticato, nella Dashboard
+
+    alt Visualizza Appuntamenti
+        Meccanico->>UI: Seleziona "Appuntamenti"
+        UI->>AppService: GetAppointmentsForMechanic(mechId)
+        AppService->>DB: SELECT * FROM Appuntamenti WHERE MechanicId=mechId
+        DB-->>AppService: Lista_Appuntamenti
+        AppService-->>UI: List<MechanicAppointmentDto>
+        UI-->>Meccanico: Mostra elenco appuntamenti
+
+        Meccanico->>UI: Conferma Appuntamento A
+        UI->>AppService: ConfirmAppointment(A, mechId)
+        AppService->>DB: UPDATE Appuntamenti SET Stato="Confermato" WHERE Id=A
+        DB-->>AppService: OK
+        AppService->>Email: Notifica Cliente
+        AppService-->>UI: AppuntamentoDto aggiornato
+        UI-->>Meccanico: Mostra conferma
+    end
+
+    alt Registra Riparazione
+        Meccanico->>UI: Seleziona Appuntamento B e clicca "Registra Riparazione"
+        UI->>RepairService: CreateRepair(dto, mechId)
+        RepairService->>DB: INSERT INTO Riparazioni (...)
+        DB-->>RepairService: Nuova_RiparazioneId
+        RepairService->>DB: UPDATE Ricambi SET QuantitaDisponibile -= q WHERE Id=...
+        DB-->>RepairService: OK
+        RepairService->>Email: Notifica Cliente riparazione completata
+        RepairService-->>UI: RiparazioneDto creato
+        UI-->>Meccanico: Mostra conferma registrazione
+    end
+
+    alt Crea Preventivo
+        Meccanico->>UI: Seleziona "Preventivi"
+        UI->>VeicoloService: GetVehiclesAssigned(mechId)
+        VeicoloService->>DB: SELECT * FROM Veicoli WHERE MechanicId=mechId
+        DB-->>VeicoloService: Lista_Veicoli
+        VeicoloService-->>UI: List<MechanicVehicleDto>
+        UI-->>Meccanico: Mostra dropdown veicoli
+
+        Meccanico->>UI: Compila Preventivo (Servizi + Ricambi)
+        UI->>PreventivoService: CreateQuote(dto, mechId)
+        PreventivoService->>DB: INSERT INTO Preventivi (...)
+        DB-->>PreventivoService: Nuovo_PreventivoId
+        PreventivoService->>DB: INSERT righe servizi + righe ricambi e UPDATE ricambi
+        DB-->>PreventivoService: OK
+        PreventivoService->>Email: Notifica Cliente nuovo preventivo
+        PreventivoService-->>UI: PreventivoDto creato
+        UI-->>Meccanico: Mostra conferma invio preventivo
+    end
+
+    alt Gestione Profilo
+        Meccanico->>UI: Seleziona "Profilo"
+        UI->>DB: SELECT * FROM Users WHERE Id=mechId
+        DB-->>UI: UserEntity
+        UI-->>Meccanico: Mostra form dati personali
+
+        Meccanico->>UI: Modifica e salva dati
+        UI->>DB: UPDATE Users SET ... WHERE Id=mechId
+        DB-->>UI: OK
+        UI-->>Meccanico: Mostra conferma
+    end
+
+-----------------------------------------------
+
+*ADMIN*
+sequenceDiagram
+    autonumber
+    participant Admin
+    participant UI as "Blazor UI"
+    participant UserService
+    participant ServiceService
+    participant SparePartService
+    participant DB as "Database"
+
+    Note over Admin,UI: Admin autenticato, nella Dashboard
+
+    alt Gestione Utenti
+        Admin->>UI: Seleziona "Gestione Utenti"
+        UI->>UserService: GetAllUsers()
+        UserService->>DB: SELECT * FROM Users
+        DB-->>UserService: Lista_Users
+        UserService-->>UI: List<UserDto>
+        UI-->>Admin: Mostra elenco utenti
+
+        Admin->>UI: Crea nuovo utente
+        UI->>UserService: Register(dto)
+        UserService->>DB: INSERT INTO Users (...)
+        DB-->>UserService: Nuovo UserId
+        UserService-->>UI: UserDto creato
+        UI-->>Admin: Mostra conferma creazione
+
+        Admin->>UI: Elimina Utente Y
+        UI->>UserService: DeleteUser(Y)
+        UserService->>DB: DELETE FROM Users WHERE Id=Y
+        DB-->>UserService: OK
+        UserService-->>UI: Success
+        UI-->>Admin: Mostra conferma eliminazione
+    end
+
+    alt Gestione Servizi
+        Admin->>UI: Seleziona "Gestione Servizi"
+        UI->>ServiceService: GetAllServices()
+        ServiceService->>DB: SELECT * FROM Servizi
+        DB-->>ServiceService: Lista_Servizi
+        ServiceService-->>UI: List<ServiceDto>
+        UI-->>Admin: Mostra elenco servizi
+
+        Admin->>UI: Aggiungi Servizio A
+        UI->>ServiceService: CreateService(dto)
+        ServiceService->>DB: INSERT INTO Servizi (...)
+        DB-->>ServiceService: Nuovo ServiceId
+        ServiceService-->>UI: ServiceDto creato
+        UI-->>Admin: Mostra conferma
+
+        Admin->>UI: Elimina Servizio B
+        UI->>ServiceService: DeleteService(B)
+        ServiceService->>DB: DELETE FROM Servizi WHERE Id=B
+        DB-->>ServiceService: OK
+        ServiceService-->>UI: Success
+        UI-->>Admin: Mostra conferma
+    end
+
+    alt Gestione Ricambi
+        Admin->>UI: Seleziona "Gestione Ricambi"
+        UI->>SparePartService: GetAllSpareParts()
+        SparePartService->>DB: SELECT * FROM Ricambi
+        DB-->>SparePartService: Lista_Ricambi
+        SparePartService-->>UI: List<SparePartDto>
+        UI-->>Admin: Mostra elenco ricambi
+
+        Admin->>UI: Aggiungi Ricambio X
+        UI->>SparePartService: CreateSparePart(dto)
+        SparePartService->>DB: INSERT INTO Ricambi (...)
+        DB-->>SparePartService: Nuovo RicambioId
+        SparePartService-->>UI: SparePartDto creato
+        UI-->>Admin: Mostra conferma
+
+        Admin->>UI: Elimina Ricambio Y
+        UI->>SparePartService: DeleteSparePart(Y)
+        SparePartService->>DB: DELETE FROM Ricambi WHERE Id=Y
+        DB-->>SparePartService: OK
+        SparePartService-->>UI: Success
+        UI-->>Admin: Mostra conferma
+    end
+
+--------------------------------------------
+
+*LOGIN E AUTENTICAZIONE*
+sequenceDiagram
+    autonumber
+    participant Utente
+    participant UI as "Blazor UI"
+    participant AuthService
+    participant DB as "Database"
+    participant Email as "Email Service"
+
+    Note over Utente,UI: Utente anonimo nella pagina di Login/Registrazione
+
+    alt Login
+        Utente->>UI: Inserisce Email e Password
+        UI->>AuthService: Login(dto)
+        AuthService->>DB: SELECT * FROM Users WHERE Email=...
+        DB-->>AuthService: UserEntity (PasswordHash, Role)
+        AuthService->>AuthService: Verifica Password
+        AuthService-->>UI: LoginResponseDto + Set-Cookie
+        UI-->>Utente: Redirect a Dashboard in base al ruolo
+    end
+
+    alt Registrazione
+        Utente->>UI: Clic "Registrati"
+        UI->>AuthService: Register(dto)
+        AuthService->>DB: INSERT INTO Users (...)
+        DB-->>AuthService: Nuovo UserId
+        AuthService-->>UI: Success / Errori
+        UI-->>Utente: Mostra conferma o messaggi di errore
+    end
+
+    alt Password Dimenticata
+        Utente->>UI: Clic "Password Dimenticata"
+        UI->>AuthService: RequestPasswordReset(email)
+        AuthService->>DB: SELECT * FROM Users WHERE Email=...
+        DB-->>AuthService: UserEntity
+        AuthService->>AuthService: Genera Token + Salva in PasswordResetTokens
+        AuthService->>Email: Invia email con link di reset
+        AuthService-->>UI: Success
+        UI-->>Utente: Messaggio "Controlla la tua email"
+    end
+
+    alt Reset Password
+        Utente->>UI: Clicca link con email+token
+        UI->>UI: Mostra form Reset (NewPassword, ConfirmPassword, token)
+        Utente->>UI: Invia nuovo set di password + token
+        UI->>AuthService: ResetPassword(dto)
+        AuthService->>DB: SELECT * FROM PasswordResetTokens WHERE Token=...
+        DB-->>AuthService: TokenEntity
+        AuthService->>DB: UPDATE Users SET PasswordHash=...
+        AuthService->>DB: DELETE FROM PasswordResetTokens WHERE Token=...
+        DB-->>AuthService: OK
+        AuthService-->>UI: Success
+        UI-->>Utente: Messaggio "Password aggiornata" e redirect a Login
+    end
+
+    alt Logout
+        Utente->>UI: Clic "Logout"
+        UI->>AuthService: Logout()
+        AuthService->>AuthService: HttpContext.SignOutAsync()
+        AuthService-->>UI: Success
+        UI-->>Utente: Redirect a Login
+    end
