@@ -1,0 +1,281 @@
+﻿@page "/servizi"
+@using BlazorOfficina.Data.Dtos
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text">Officina Meccanica Milani</span>
+        </a>
+
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/servizi" class="active">Servizi</a>
+            <a href="/chisiamo">Chi Siamo</a>
+            <a href="/contatti">Contatti</a>
+        </nav>
+
+        <div class="icone">
+            <a href="#" class="icona language-switcher" title="Seleziona lingua">
+                <img src="/Images/Index/BandieraIt.jpg" alt="IT" class="flag-icon" />
+                <span class="lang-code">IT</span>
+                <i class="fas fa-chevron-down chevron-icon"></i>
+            </a>
+
+            <AuthorizeView>
+                <NotAuthorized>
+                    <a href="/login" class="icona" title="Accedi">
+                        <i class="fas fa-user"></i>
+                    </a>
+                </NotAuthorized>
+                <Authorized>
+                    <div class="auth-icons">
+                        <a class="icona" role="button" title="Area personale" @onclick="GoToProfile">
+                            <i class="fas fa-user"></i>
+                        </a>
+
+                        <form method="post"
+                              action="/api/auth/logout"
+                              class="logout-form"
+                              style="margin:0; padding:0;">
+                            <input type="hidden" name="returnUrl" value="/" />
+                            <button type="submit" class="icona" title="Esci">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<section class="banner">
+    <div class="container">
+        <h1>I Nostri Servizi Professionali</h1>
+        <p>Offriamo soluzioni complete per la manutenzione e riparazione del tuo veicolo, garantendo qualità e affidabilità in ogni intervento.</p>
+        <div class="help-buttons">
+            <a href="/prenota-appuntamento" class="btn-call">Prenota un servizio</a>
+            <a href="/customer/quotes" class="btn-book">Richiedi preventivo</a>
+        </div>
+    </div>
+</section>
+
+<section class="servizi-principali">
+    <div class="container text-center">
+        <h3>I Nostri Servizi Principali</h3>
+        <p class="text-muted mb-4">
+            Scopri la gamma completa dei nostri servizi professionali per mantenere il tuo veicolo in perfette condizioni
+        </p>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card h-100 position-relative">
+                    <span class="border-top border-success"></span>
+                    <div class="card-body">
+                        <h5 class="card-title">Tagliando Completo</h5>
+                        <p class="card-text">
+                            Manutenzione periodica che include cambio olio, filtri, controllo freni, pneumatici e tutti gli elementi essenziali per la sicurezza del veicolo.
+                        </p>
+                        <ul class="list-unstyled mb-3">
+                            <li><i class="fas fa-check-circle text-success"></i>Cambio olio e filtri</li>
+                            <li><i class="fas fa-check-circle text-success"></i>Controllo freni e sospensioni</li>
+                            <li><i class="fas fa-check-circle text-success"></i>Verifica livelli liquidi</li>
+                            <li><i class="fas fa-check-circle text-success"></i>Diagnostica computerizzata</li>
+                        </ul>
+                        <p class="fw-bold mb-3">Da €120</p>
+                        <button href="/prenota-appuntamento" class="btn-servizi">Prenota</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 position-relative">
+                    <span class="border-top border-warning"></span>
+                    <div class="card-body">
+                        <h5 class="card-title">Revisione Auto</h5>
+                        <p class="card-text">
+                            Controllo obbligatorio per verificare che il veicolo rispetti i requisiti di sicurezza e inquinamento previsti dalla legge.
+                        </p>
+                        <ul class="list-unstyled mb-3">
+                            <li><i class="fas fa-check-circle text-warning"></i>Verifica freni</li>
+                            <li><i class="fas fa-check-circle text-warning"></i>Controllo emissioni</li>
+                            <li><i class="fas fa-check-circle text-warning"></i>Ispezione carrozzeria</li>
+                            <li><i class="fas fa-check-circle text-warning"></i>Verifica luci e segnalazioni</li>
+                        </ul>
+                        <p class="fw-bold mb-3">Da €80</p>
+                        <button href="/prenota-appuntamento" class="btn-servizi">Prenota</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 position-relative">
+                    <span class="border-top border-danger"></span>
+                    <div class="card-body">
+                        <h5 class="card-title">Riparazioni Meccaniche</h5>
+                        <p class="card-text">
+                            Interventi personalizzati per risolvere qualsiasi problema meccanico, elettrico o elettronico del veicolo.
+                        </p>
+                        <ul class="list-unstyled mb-3">
+                            <li><i class="fas fa-wrench"></i>Sostituzione freni</li>
+                            <li><i class="fas fa-car-mechanic"></i>Riparazione sospensioni</li>
+                            <li><i class="fas fa-cogs"></i>Riparazione impianto frenante</li>
+                            <li><i class="fas fa-bolt"></i>Diagnosi guasti elettronici</li>
+                        </ul>
+                        <p class="fw-bold mb-3">Preventivo</p>
+                        <button href="/customer/quotes" class="btn-servizi">Richiedi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="servizi-come-funziona">
+    <div class="container text-center">
+        <h3>Come Funziona</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="p-4 border rounded">
+                    <div class="icon-circle bg-secondary mb-3"><i class="fas fa-calendar-alt fa-2x text-white"></i></div>
+                    <h5>Prenotazione</h5>
+                    <p class="small">Prenota online o telefonicamente il servizio dell’officina. Ti basta scegliere data e orario preferiti.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border rounded">
+                    <div class="icon-circle bg-success mb-3"><i class="fas fa-search fa-2x text-white"></i></div>
+                    <h5>Diagnosi</h5>
+                    <p class="small">I nostri tecnici eseguono un check-up completo del veicolo e ti forniscono un preventivo dettagliato.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 border rounded">
+                    <div class="icon-circle bg-primary mb-3"><i class="fas fa-tools fa-2x text-white"></i></div>
+                    <h5>Riparazione</h5>
+                    <p class="small">Dopo la tua approvazione, eseguiamo i lavori necessari e ti teniamo aggiornato sullo stato della riparazione.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="monitoraggio-auto">
+    <div class="header">
+        <div class="header-info">
+            <h4>Monitora lo Stato della Tua Auto</h4>
+            <small class="targa">Fiat Punto (AB123CD)</small>
+        </div>
+        <div class="status-badge">In lavorazione</div>
+    </div>
+
+    <div class="timeline-wrapper">
+        <div class="timeline-bar"></div>
+        <div class="timeline-fill"></div>
+        <div class="timeline-steps">
+            <div class="step completed"><i class="fas fa-check"></i><span>Prenotato</span></div>
+            <div class="step completed"><i class="fas fa-search"></i><span>Diagnosi</span></div>
+            <div class="step active"><i class="fas fa-tools"></i><span>Riparazione</span></div>
+            <div class="step inactive"><i class="fas fa-flag-checkered"></i><span>Pronta</span></div>
+        </div>
+    </div>
+
+    <ul class="details-list">
+        <li class="detail-item">
+            <i class="fas fa-info-circle icon"></i>
+            <div class="detail-content">
+                <strong>Stato attuale:</strong>
+                <p>La tua auto è in fase di riparazione. Il meccanico sta sostituendo i dischi freno anteriori.</p>
+            </div>
+        </li>
+        <li class="detail-item">
+            <i class="fas fa-clock icon"></i>
+            <div class="detail-content">
+                <strong>Tempo stimato:</strong>
+                <p>Tempo rimanente: circa 2 ore (previsto per le 15:30)</p>
+            </div>
+        </li>
+        <li class="detail-item">
+            <i class="fas fa-euro-sign icon"></i>
+            <div class="detail-content">
+                <strong>Preventivo:</strong>
+                <p>Importo confermato: €320 (incluso IVA e manodopera)</p>
+            </div>
+        </li>
+    </ul>
+</div>
+
+
+<footer class="footer servizi-footer">
+    <section class="help-section">
+        <div class="container">
+            <h2>Pronto a prenderti cura della tua auto?</h2>
+
+            <div class="help-buttons">
+                <a class="btn-call">
+                    <i class="fas fa-phone-alt"></i>
+                    075 69409632
+                </a>
+                <a href="/customer" class="btn-book">Iscriviti</a>
+            </div>
+        </div>
+    </section>
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<div class="footer-legal">
+    <div class="container">
+        <p>
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/cookie">Cookie Policy</a> |
+        </p>
+    </div>
+</div>
+
+@code {
+    private async Task GoToProfile()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (user.IsInRole("Admin"))
+            NavigationManager.NavigateTo("/admin");
+        else if (user.IsInRole("Mechanic"))
+            NavigationManager.NavigateTo("/mechanic");
+        else if (user.IsInRole("Customer"))
+            NavigationManager.NavigateTo("/customer");
+        else
+            NavigationManager.NavigateTo("/");
+    }
+}

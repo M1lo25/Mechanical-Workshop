@@ -1,0 +1,19 @@
+﻿@page "/logout"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<p>Sto effettuando il logout…</p>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // 1) POST a /api/auth/logout (non serve body, ma deve essere form-url-encoded)
+        await Http.PostAsync("api/auth/logout", new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("returnUrl", "/")
+        }));
+
+        // 2) Forza il reload su /login (così carica la pagina di login e il cookie è già rimosso)
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+}

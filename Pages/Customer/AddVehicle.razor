@@ -1,0 +1,300 @@
+﻿@page "/customer/addVehicle"
+@attribute [Authorize(Roles = "Customer")]
+@using BlazorOfficina.Data.Models
+@using BlazorOfficina.Data.Dtos
+@inject IVeicoloService VeicoloService
+@inject NavigationManager Nav
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/customer">Dashboard</a>
+            <a href="/prenota-appuntamento">Appuntamento</a>
+            <a href="/customer/vehicles">Veicoli</a>
+            <a href="/customer/preventivi">Preventivi</a>
+        </nav>
+        <div class="iconeCliente">
+            <a class="icona"><i class="fas fa-bell"></i></a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<form class="add-veicolo-container" @onsubmit="OnSubmit" autocomplete="off">
+    <div class="add-veicolo-header">
+        <i class="fas fa-car"></i> Aggiungi Veicolo
+    </div>
+
+    <div class="add-veicolo-section-title">
+        <i class="fas fa-car"></i> Tipo di veicolo *
+    </div>
+    <div class="add-veicolo-tipo-veicolo" required>
+        @foreach (var tipo in Enum.GetValues<CategoriaVeicolo>())
+        {
+            var isSelected = dto.Categoria == tipo;
+            <div class="add-veicolo-tipo-card @(isSelected ? "selected" : "")"
+                 @onclick="() => dto.Categoria = tipo">
+                <i class="@GetVehicleIcon(tipo)"></i>
+                <div class="mt-1">
+                    @tipo  
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="add-veicolo-section-title">
+        <i class="fas fa-info-circle"></i> Dettagli del veicolo
+    </div>
+
+    <div class="add-veicolo-field">
+        <label for="marca">Marca *</label>
+        <input id="marca"
+               list="marcaOptions"
+               @bind="dto.Marca"
+               class="form-control"
+               placeholder="Seleziona marca"
+               required />
+        <datalist id="marcaOptions" >
+            <option value="Abarth" />
+            <option value="Alfa Romeo" />
+            <option value="Aston Martin" />
+            <option value="Audi" />
+            <option value="Bentley" />
+            <option value="BMW" />
+            <option value="Bugatti" />
+            <option value="Cadillac" />
+            <option value="Chevrolet" />
+            <option value="Chrysler" />
+            <option value="Citroën" />
+            <option value="Dacia" />
+            <option value="Dodge" />
+            <option value="DS Automobiles" />
+            <option value="Ferrari" />
+            <option value="Fiat" />
+            <option value="Ford" />
+            <option value="Honda" />
+            <option value="Hyundai" />
+            <option value="Infiniti" />
+            <option value="Jaguar" />
+            <option value="Jeep" />
+            <option value="Kia" />
+            <option value="Lamborghini" />
+            <option value="Lancia" />
+            <option value="Land Rover" />
+            <option value="Lexus" />
+            <option value="Maserati" />
+            <option value="Mazda" />
+            <option value="McLaren" />
+            <option value="Mercedes-Benz" />
+            <option value="MG" />
+            <option value="Mini" />
+            <option value="Mitsubishi" />
+            <option value="Nissan" />
+            <option value="Opel" />
+            <option value="Peugeot" />
+            <option value="Porsche" />
+            <option value="Renault" />
+            <option value="Rolls-Royce" />
+            <option value="Seat" />
+            <option value="Skoda" />
+            <option value="Smart" />
+            <option value="Subaru" />
+            <option value="Suzuki" />
+            <option value="Tesla" />
+            <option value="Toyota" />
+            <option value="Volkswagen" />
+            <option value="Volvo" />
+        </datalist>
+    </div>
+
+    <div class="add-veicolo-field">
+        <label for="modello">Modello *</label>
+        <input id="modello"
+               type="text"
+               @bind="dto.Modello"
+               class="form-control"
+               placeholder="Es. Punto"
+               required />
+    </div>
+
+    <div class="add-veicolo-row">
+        <div class="add-veicolo-col add-veicolo-field">
+            <label for="anno">Anno *</label>
+            <select id="anno"
+                    @bind="dto.Anno"
+                    class="form-select"
+                    required>
+                <option value="">Seleziona anno</option>
+                @for (int y = DateTime.Now.Year; y >= 1950; y--)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+        </div>
+        <div class="add-veicolo-col add-veicolo-field">
+            <label for="targa">Targa *</label>
+            <input id="targa"
+                   type="text"
+                   @bind="dto.Targa"
+                   class="form-control"
+                   placeholder="ES: AB123CD"
+                   maxlength="10"
+                   required />
+        </div>
+    </div>
+
+    <div class="add-veicolo-field">
+        <label for="km">Chilometraggio *</label>
+        <div class="input-group">
+            <input id="km"
+                   type="number"
+                   @bind="dto.Chilometraggio"
+                   class="form-control"
+                   placeholder="Es: 45000"
+                   min="0"
+                   required />
+            <span class="input-group-text">km</span>
+        </div>
+    </div>
+
+    <div class="add-veicolo-field">
+        <label for="carb">Carburante *</label>
+        <input id="carb"
+               list="carbOptions"
+               @bind="dto.Carburante"
+               class="form-control"
+               placeholder="Seleziona tipo"
+               required />
+        <datalist id="carbOptions">
+            <option value="Benzina" />
+            <option value="Diesel" />
+            <option value="Elettrica" />
+            <option value="GPL" />
+            <option value="Metano" />
+        </datalist>
+    </div>
+
+    <div class="add-veicolo-section-title">
+        <i class="fas fa-info-circle"></i> Informazioni aggiuntive
+    </div>
+    <div class="add-veicolo-field">
+        <label for="note">Note sul veicolo</label>
+        <textarea id="note"
+                  @bind="dto.Note"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Es: modifiche speciali, note…"></textarea>
+    </div>
+
+    <div class="add-veicolo-section-title">
+        <i class="fas fa-file-alt"></i> Documenti disponibili
+    </div>
+    <div class="add-veicolo-docs-toggle">
+        <input type="checkbox"
+               id="doc-libretto"
+               class="add-veicolo-doc-toggle-input"
+               @bind="dto.LibrettoCircolazione" />
+        <label for="doc-libretto"
+               class="add-veicolo-doc-toggle-label">
+            <i class="fas fa-id-card"></i> Libretto
+        </label>
+
+        <input type="checkbox"
+               id="doc-manuale"
+               class="add-veicolo-doc-toggle-input"
+               @bind="dto.ManualeUso" />
+        <label for="doc-manuale"
+               class="add-veicolo-doc-toggle-label">
+            <i class="fas fa-book"></i> Manuale
+        </label>
+
+        <input type="checkbox"
+               id="doc-chiavi"
+               class="add-veicolo-doc-toggle-input"
+               @bind="dto.ChiaviDiRiserva" />
+        <label for="doc-chiavi"
+               class="add-veicolo-doc-toggle-label">
+            <i class="fas fa-key"></i> Chiavi
+        </label>
+    </div>
+
+    <div class="add-veicolo-actions">
+        <button type="button"
+                class="add-veicolo-btn-cancel"
+                @onclick='() => Nav.NavigateTo("/customer/vehicles")'>
+            X Annulla
+        </button>
+        <button type="submit" class="add-veicolo-btn-save">
+            Salva veicolo
+        </button>
+    </div>
+</form>
+
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br />Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+@code {
+    private AggiungiVeicoloDto dto = new();
+
+    private async Task OnSubmit()
+    {
+        await VeicoloService.CreaVeicoloAsync(dto);
+        Nav.NavigateTo("/customer/vehicles");
+    }
+
+
+    private string GetVehicleIcon(CategoriaVeicolo tipo) => tipo switch
+    {
+        CategoriaVeicolo.Auto => "fas fa-car",
+        CategoriaVeicolo.Pickup => "fas fa-truck-pickup",
+        CategoriaVeicolo.Furgone => "fas fa-truck",
+        CategoriaVeicolo.Moto => "fas fa-motorcycle",
+        _ => "fas fa-question-circle"
+    };
+}

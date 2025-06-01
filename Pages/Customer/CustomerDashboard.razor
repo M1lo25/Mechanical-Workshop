@@ -1,0 +1,421 @@
+﻿@page "/customer"
+@attribute [Authorize(Roles = "Customer")]
+
+@using BlazorOfficina.Data.Dtos
+@using BlazorOfficina.Services
+@using System.Security.Claims
+
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IUserService UserService
+@inject IAppointmentService AppointmentService
+@inject IVeicoloService VehicleService
+@inject IQuoteService QuoteService
+
+<div class="layout-container customer-dashboard">
+
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+                <span class="logo-text ms-2">Officina Meccanica Milani</span>
+            </a>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/servizi">Servizi</a>
+                <a href="/chisiamo">Chi Siamo</a>
+                <a href="/contatti">Contatti</a>
+            </nav>
+            <div class="iconeCliente">
+                <a class="icona">
+                    <i class="fas fa-bell"></i>
+                </a>
+                
+                <AuthorizeView>
+                    <Authorized>
+                        <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                            <input type="hidden" name="returnUrl" value="/" />
+                            <button type="submit" class="icona" title="Esci">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </form>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+
+        <aside class="sidebar bg-white shadow-sm">
+            <div class="user-profile">
+                <img src="@ProfileImageUrl"
+                     alt="Foto profilo di @UserName"
+                     class="avatar" />
+                <div class="user-info">
+                    <div class="user-name">@UserName</div>
+                    <small class="registered-date">
+                        Registrato il @RegisteredAt.ToLocalTime().ToString("dd/MM/yyyy")
+                    </small>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav px-2 py-3">
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link" href="/customer" Match="NavLinkMatch.All">
+                            <i class="fa-solid fa-tachometer-alt me-2"></i>
+                            Dashboard
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link" href="/prenota-appuntamento">
+                            <i class="fa-solid fa-calendar-plus me-2"></i>
+                            Prenota appuntamento
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link" href="/customer/vehicles">
+                            <i class="fa-solid fa-car-side me-2"></i>
+                            I miei veicoli
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link" href="/customer/quotes">
+                            <i class="fa-solid fa-file-invoice-dollar me-2"></i>
+                            Preventivi
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link" href="/customer/storico-interventi">
+                            <i class="fa-solid fa-history me-2"></i>
+                            Storico interventi
+                        </NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link">
+                            <i class="fa-solid fa-cog me-2"></i>
+                            Impostazioni
+                        </NavLink>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="quick-actions px-3 mt-auto pb-4">
+                
+                <button class="btn btn-outline-success w-100 mb-2"
+                        @onclick='() => NavigationManager.NavigateTo("/customer/quotes")'>
+                    <i class="fa-solid fa-file-invoice-dollar me-2"></i>
+                    Richiedi preventivo
+                </button>
+
+                <button class="btn btn-outline-secondary w-100"
+                        @onclick='() => NavigationManager.NavigateTo("/customer/addVehicle")'>
+                    <i class="fa-solid fa-plus me-2"></i>
+                    Aggiungi veicolo
+                </button>
+            </div>
+        </aside>
+
+        <main class="dashboard-panel">
+            <section class="dashboard-header">
+                <div class="welcome-text">
+                    <h2>Benvenuto, @UserName!</h2>
+                    <p>Ecco una panoramica delle tue attività con Officina Milani</p>
+                </div>
+                <NavLink class="btn btn-light"
+                         href="/prenota-appuntamento">
+                    Prenota ora
+                </NavLink>
+            </section>
+
+            <section class="stats-cards">
+                <a href="/customer/vehicles" class="stat-card" title="Vai ai veicoli">
+                    <i class="fas fa-car-side"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">@RegisteredVehiclesCount</span>
+                        <span class="stat-label">Veicoli registrati</span>
+                    </div>
+                </a>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">@CompletedAppointmentsCountByTime</span>
+                        <span class="stat-label">Interventi completati</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-tools"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">@InProgressAppointmentsCountByTime</span>
+                        <span class="stat-label">In lavorazione</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">
+                            @((NextAppointmentDate.HasValue)
+                                ? NextAppointmentDate.Value.ToString("dd MMM")
+                                : "-")
+                        </span>
+                        <span class="stat-label">Prossimo appuntamento</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ongoing-repairs card-paragraph">
+                <h3>Riparazioni in corso</h3>
+
+                @if (!RiparazioniInCorso.Any())
+                {
+                    <p class="empty-message">Nessuna riparazione in corso</p>
+                }
+                else
+                {
+                    <div class="repair-list">
+                        @foreach (var r in RiparazioniInCorso)
+                        {
+                            <div class="repair-card">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-car-side"></i>
+                                    <div class="repair-info">
+                                        <strong>@r.ModelloVeicolo (@r.VehicleTarga)</strong>
+                                        <span>
+                                            Pronto per il ritiro dal @r.DataProntoRitiro.ToString("dd/MM/yyyy")
+                                        </span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-primary"
+                                        @onclick="() => GoToDetails(r.Id)">
+                                    Dettagli
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="upcoming-appointments card-paragraph">
+                <div class="section-header">
+                    <h3>Prossimi appuntamenti</h3>
+                    <a class="see-all" href="/prenota-appuntamento">
+                        Vedi tutti <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+
+                @if (!ProssimiAppuntamenti.Any())
+                {
+                    <p class="empty-message">Nessun appuntamento prenotato</p>
+                }
+                else
+                {
+                    <div class="appointment-list">
+                        @foreach (var a in ProssimiAppuntamenti)
+                        {
+                            <div class="appointment-card d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-alt fa-2x me-3"></i>
+                                    <div class="appointment-info">
+                                        <strong>@a.Tipo</strong>
+                                        <span>
+                                            @a.ModelloVeicolo (@a.TargaVeicolo) —
+                                            @a.DataAppuntamento.ToString("dd MMM yyyy, HH:mm")
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="appointment-actions">
+                                    <button class="btn btn-outline-danger btn-sm"
+                                            @onclick="() => CancelAppointment(a.Id)">
+                                        Cancella
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="recent-quotes card-paragraph">
+                <div class="section-header">
+                    <h3>Preventivi recenti</h3>
+                    <a class="see-all" href="/customer/quotes">
+                        Vedi tutti <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+
+                @if (!PreventiviRecenti.Any())
+                {
+                    <p class="empty-message">Nessun preventivo recente</p>
+                }
+                else
+                {
+                    <div class="quote-list">
+                        @foreach (var q in PreventiviRecenti)
+                        {
+                            <div class="quote-card d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-invoice-dollar fa-2x me-3"></i>
+                                    <div class="quote-info">
+                                        <strong>@q.Titolo</strong>
+                                        <span>@q.ModelloVeicolo (@q.TargaVeicolo)</span>
+                                        <span class="quote-total">
+                                            Totale: @q.Totale.ToString("C")
+                                        </span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm"
+                                        @onclick="() => GoToQuote(q.Id)">
+                                    Dettagli
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        </main>
+
+    </div>
+    <footer class="footer">
+        <div class="container footer-main">
+            <div class="footer-col footer-logo">
+                <div class="footer-logo-brand">
+                    <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                    <span class="footer-logo-text">Officina<br />Meccanica<br />Milani</span>
+                </div>
+                <p class="footer-piva">P.IVA: 01234567890</p>
+            </div>
+
+            <div class="footer-col footer-contact">
+                <h4>Sede e Contatti</h4>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+            </div>
+
+            <div class="footer-col footer-hours">
+                <h4>Orari di Apertura</h4>
+                <p>
+                    LUN – VEN<br />
+                    8:00 – 12:30<br />
+                    14:30 – 18:00
+                </p>
+            </div>
+
+            <div class="footer-col footer-social">
+                <h4>Seguici</h4>
+                <div class="social-icons">
+                    <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="footer-legal">
+        <div class="container">
+            <p>
+                <a href="/privacy">Privacy Policy</a> |
+                <a href="/cookie">Cookie Policy</a> |
+            </p>
+        </div>
+    </div>
+
+</div> 
+
+@code {
+    private string? userId;
+    private string UserName = string.Empty;
+    private DateTime RegisteredAt;
+    private int RegisteredVehiclesCount;
+    private int InProgressAppointmentsCountByTime;
+    private int CompletedAppointmentsCountByTime;
+    private DateTime? NextAppointmentDate;
+
+    private List<RiparazioneDto> RiparazioniInCorso = new();
+    private List<AppuntamentoDto> ProssimiAppuntamenti = new();
+    private List<PreventivoDto> PreventiviRecenti = new();
+
+    private string ProfileImageUrl = "/images/default-profile.png";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1) Recupero dell’AuthenticationState e dell’utente loggato
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // 2) Estraggo username e userId (può essere null se il claim non esiste)
+        UserName = user.Identity?.Name ?? "Cliente";
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        // 3) Se userId è null o vuoto, assegno default e esco
+        if (string.IsNullOrEmpty(userId))
+        {
+            RegisteredVehiclesCount = 0;
+            CompletedAppointmentsCountByTime = 0;
+            InProgressAppointmentsCountByTime = 0;
+            NextAppointmentDate = null;
+            RiparazioniInCorso = new List<RiparazioneDto>();
+            ProssimiAppuntamenti = new List<AppuntamentoDto>();
+            PreventiviRecenti = new List<PreventivoDto>();
+            return;
+        }
+
+        // 4) Se userId non è null, posso procedere a recuperare i dati dal servizio
+
+        // 4.1) Se è un numero valido, prendo i dati dell’utente (es. RegisteredAt, ProfileImageUrl)
+        if (int.TryParse(userId, out var id))
+        {
+            var fullUser = await UserService.FindByIdAsync(id);
+            if (fullUser is not null)
+            {
+                RegisteredAt = fullUser.RegisteredAt;
+                ProfileImageUrl = $"/api/user/{fullUser.Id}/profile-image";
+            }
+        }
+
+        PreventiviRecenti = await QuoteService
+            .GetRecentQuotesAsync(userId, 5);
+
+        RegisteredVehiclesCount = await AppointmentService
+            .GetRegisteredVehiclesCountAsync(userId);
+
+        CompletedAppointmentsCountByTime = await AppointmentService
+            .GetCompletedAppointmentsCountForCustomerAsync(userId);
+
+        InProgressAppointmentsCountByTime = await AppointmentService
+            .GetCurrentAppointmentsCountForCustomerAsync(userId);
+
+        NextAppointmentDate = await AppointmentService
+            .GetNextAppointmentDateAsync(userId);
+
+        RiparazioniInCorso = await AppointmentService
+            .GetOngoingRepairsAsync(userId);
+
+        ProssimiAppuntamenti = await AppointmentService
+            .GetUpcomingAppointmentsAsync(userId, 5);
+    }
+
+    private void GoToDetails(int id) =>
+        NavigationManager.NavigateTo($"/customer/repairs/{id}");
+
+    private async Task CancelAppointment(int id)
+    {
+        try
+        {
+            await AppointmentService.CancelAppointmentAsync(id, userId!);
+
+            ProssimiAppuntamenti = await AppointmentService
+                .GetUpcomingAppointmentsAsync(userId!, 5);
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+    private void GoToQuote(int id) =>
+        NavigationManager.NavigateTo($"/customer/quotes");
+}

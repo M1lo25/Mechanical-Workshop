@@ -1,0 +1,128 @@
+﻿@page "/login"
+@attribute [AllowAnonymous]
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<HeadContent>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121212;
+        }
+    </style>
+</HeadContent>
+
+<AuthorizeView>
+    <Authorized>
+        @* Utente già loggato: facciamo redirect via JS *@
+    </Authorized>
+    <NotAuthorized>
+        <a href="/" class="back-button" title="Torna alla Home">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-brand">
+                    <img src="/Images/Logging/LogoHome.png"
+                         alt="Officina Meccanica Milani"
+                         class="login-logo" />
+                    <span class="brand-title">
+                        Officina<br />Meccanica<br />Milani
+                    </span>
+                </div>
+
+                <h2>ACCEDI</h2>
+
+                <form method="post" action="api/auth/login">
+                    <input type="hidden" name="ReturnUrl" value="@returnUrl" />
+
+                    <input name="Identifier"
+                           type="text"
+                           placeholder="Nome utente o Email"
+                           class="input-field"
+                           required />
+
+                    <input name="Password"
+                           type="password"
+                           placeholder="Password"
+                           class="input-field"
+                           required />
+
+                    <button type="submit" class="btn-login">LOGIN</button>
+                </form>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="error-text">@errorMessage</div>
+                }
+
+                <a href="/forgot-password" class="forgot-link">
+                    Password dimenticata?
+                </a>
+
+                <p class="register-prompt">
+                    Non hai un account?
+                    <a href="register" class="register-link">Registrati</a>
+                </p>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string? errorMessage;
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? returnUrl { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(Error)
+            && Error.Equals("credentials", StringComparison.OrdinalIgnoreCase))
+        {
+            errorMessage = "Email o password non valide. Riprova.";
+        }
+        else
+        {
+            errorMessage = null;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        // 1) se siamo qui con un query‐string (es. ?error=credentials), lo rimuoviamo
+        var uri = NavigationManager.Uri;
+        var idx = uri.IndexOf('?');
+        if (idx >= 0)
+        {
+            var clean = uri.Substring(0, idx);
+            // non ricarica la pagina, sostituisce soltanto l'URL
+            await JS.InvokeVoidAsync("history.replaceState", null, "", clean);
+        }
+
+        // 2) se l'utente è già autenticato, redirect alla home
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated ?? false)
+        {
+            await JS.InvokeVoidAsync("location.replace", "/");
+        }
+    }
+}

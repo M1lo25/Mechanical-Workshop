@@ -1,0 +1,558 @@
+﻿@page "/mechanic/appointments"
+@attribute [Authorize(Roles = "Mechanic,Admin")]
+
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@using BlazorOfficina.Data.Models
+@using BlazorOfficina.Data
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@inject IAppointmentService  AppointmentService
+@inject IRepairService       RepairService
+@inject IVeicoloService      VeicoloService
+@inject IQuoteService        QuoteService
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <nav class="nav-links">
+                    <a href="/admin">Dashboard</a>
+                    <a href="/mechanic/appointments" class="active">Appuntamenti</a>
+                    <a href="/mechanic/preventivi" >Preventivi</a>
+                    <a href="/mechanic/vehicles">Veicoli</a>
+                    <a href="/admin/gestioneUtenti">Gestione Utenti</a>
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Mechanic">
+            <Authorized>
+                <nav class="nav-links">
+                    <a href="/mechanic">Dashboard</a>
+                    <a href="/mechanic/appointments" class="active">Appuntamenti</a>
+                    <a href="/mechanic/preventivi" >Preventivi</a>
+                    <a href="/mechanic/customers">Clienti</a>
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+        <div class="iconeCliente">
+            <a class="icona">
+                <i class="fas fa-bell"></i>
+            </a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<!-- StatCards -->
+<AuthorizeView Roles="Mechanic">
+    <Authorized>
+        <section class="stats-cards-mechanic">
+            <div class="stat-card-mechanic card-appointment">
+                <div class="stat-icon-mechanic"><i class="fas fa-calendar-day"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Appuntamenti oggi</div>
+                    <div class="stat-value-mechanic">@TodayAppointmentsCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-repair">
+                <div class="stat-icon-mechanic"><i class="fas fa-tools"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Riparazioni in corso</div>
+                    <div class="stat-value-mechanic">@OngoingRepairsCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-vehicle">
+                <div class="stat-icon-mechanic"><i class="fas fa-car-side"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Veicoli in attesa</div>
+                    <div class="stat-value-mechanic">@PendingVehiclesCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-quote">
+                <div class="stat-icon-mechanic"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Preventivi da confermare</div>
+                    <div class="stat-value-mechanic">@PendingQuotesCount</div>
+                </div>
+            </div>
+        </section>
+    </Authorized>
+</AuthorizeView>
+
+<div class="mechanic-appointments-page">
+
+  <div class="top-panels">
+
+    <section class="calendar-panel panel">
+      <header class="panel-header">
+        <i class="icon-calendar"></i> Calendario
+      </header>
+      <div class="calendar-controls">
+        <button class="btn-nav" @onclick="PrevMonth">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <h3>@CurrentMonthYear</h3>
+        <button class="btn-nav" @onclick="NextMonth">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      <div class="calendar-weekdays">
+        @foreach (var wd in WeekDays)
+        {
+          <div class="weekday">@wd</div>
+        }
+      </div>
+      <div class="calendar-days">
+        @foreach (var day in CalendarDays)
+        {
+          <div class="@GetDayClasses(day)"
+               @onclick="() => SelectDate(day.Date)">
+            @day.Date.Day
+          </div>
+        }
+      </div>
+      <div class="upcoming-list">
+        <h4>Prossimi Appuntamenti</h4>
+        @if (UpcomingToday.Any())
+        {
+          @foreach (var a in UpcomingToday)
+          {
+            <div class="upcoming-item">
+              <span class="time">@a.Inizio</span>
+              <span class="desc">@a.Servizio.Nome</span>
+            </div>
+          }
+        }
+        else
+        {
+          <p class="empty">Nessun appuntamento futuro oggi.</p>
+        }
+      </div>
+    </section>
+
+    <section class="today-panel panel">
+      <header class="panel-header">
+        <span><i class="icon-clock"></i> Appuntamenti – @SelectedDate</span>
+        <div class="actions">
+          <button class="btn-small">
+            <i class="fas fa-plus"></i> Nuovo
+          </button>
+          <button class="btn-small" @onclick="Print">
+            <i class="fas fa-print"></i> Stampa
+          </button>
+        </div>
+      </header>
+
+      <div class="today-list">
+        @if (TodayAppointments.Any())
+        {
+          @foreach (var a in TodayAppointments.OrderBy(a => a.Inizio))
+          {
+            <article class="apt-card">
+              <div class="apt-main">
+                <div class="info">
+                  <h5>@a.Servizio.Nome</h5>
+                  <div class="time">@a.Inizio – @a.Fine</div>
+                  <div class="vehicle">@a.Veicolo.Marca @a.Veicolo.Modello (@a.Veicolo.Targa)</div>
+                                    <div class="client">
+                                        @a.Utente.Username
+
+                                        @if (isAdmin)
+                                        {
+                                            <div class="mechanic-name">@a.Meccanico?.Username</div>
+                                        }
+                                    </div>
+                </div>
+                <div class="apt-actions">
+                  <button class="btn-small btn-detail"
+                          @onclick='() => Nav.NavigateTo($"/mechanic/appointments/{a.Id}")'>
+                    <i class="fas fa-info-circle"></i> Dettagli
+                  </button>
+                </div>
+              </div>
+            </article>
+          }
+        }
+        else
+        {
+          <p class="empty">Nessun appuntamento oggi.</p>
+        }
+      </div>
+    </section>
+
+  </div>
+
+   
+    <section class="upcoming-days-panel panel">
+        <header class="panel-header">
+            <i class="icon-list"></i> Appuntamenti Prossimi Giorni
+        </header>
+
+        @if (NextDaysAppointments.Any())
+        {
+            <div class="panel-body">
+                <table class="apt-table">
+                    <thead>
+                        <tr>
+                            <th>DATA/ORA</th>
+                            <th>CLIENTE</th>
+                            <th>VEICOLO</th>
+                            <th>SERVIZIO</th>
+                            <th>MECCANICO</th>
+                            <th>AZIONI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in NextDaysAppointments)
+                        {
+                            <tr>
+                                <td>
+                                    @a.Inizio – @a.Fine<br />
+                                    <small class="muted">@GetRelativeDay(a.Inizio)</small>
+                                </td>
+                                <td>@a.Utente.Username</td>
+                                <td>@a.Veicolo.Marca @a.Veicolo.Modello (@a.Veicolo.Targa)</td>
+                                <td>@a.Servizio.Nome</td>
+                                <td>
+                                    @if (isAdmin)
+                                    {
+                                        <div class="mech-assignment-container">
+                                            <select class="mech-select"
+                                                    @onchange="@(e => OnMechanicChanged(a.Id, e.Value?.ToString() ?? ""))">
+                                                <option value="">-- seleziona meccanico --</option>
+
+                                                @foreach (var m in Mechanics)
+                                                {
+                                                    var currentId = SelectedMechanicForAppointment.ContainsKey(a.Id)
+                                                    ? SelectedMechanicForAppointment[a.Id]
+                                                    : (int?)null;
+                                                    var isSelected = currentId.HasValue && currentId.Value == m.Id;
+                                                    <option value="@m.Id" selected="@(isSelected)">
+                                                        @m.Username
+                                                    </option>
+                                                }
+                                            </select>
+
+                                            <button class="btn-small btn-save-mech"
+                                                    @onclick="() => SaveMechanicAssignment(a.Id)"
+                                                    title="Assegna">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @a.Meccanico?.Username
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn-small btn-danger"
+                                            @onclick="() => DeleteAppointment(a.Id)"
+                                            title="Elimina Appuntamento">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="panel-body empty-nextdays">
+                <p>Nessun appuntamento nei prossimi giorni.</p>
+            </div>
+        }
+    </section>
+    @if (!string.IsNullOrEmpty(FeedbackMessage))
+    {
+        <div class="@FeedbackCss mb-3">
+            @FeedbackMessage
+        </div>
+    }
+
+
+</div>
+
+
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<div class="footer-legal">
+    <div class="container">
+        <p>
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/cookie">Cookie Policy</a> |
+        </p>
+    </div>
+</div>
+
+@code {
+    private int TodayAppointmentsCount;
+    private int OngoingRepairsCount;
+    private int PendingVehiclesCount;
+    private int PendingQuotesCount;
+
+    private int MechanicId;
+    private DateTime SelectedDate = DateTime.Today;
+
+    private List<Appuntamento> AllAppointments = new();
+    private List<Appuntamento> TodayAppointments = new();
+    private List<Appuntamento> UpcomingToday = new();
+    private List<Appuntamento> NextDaysAppointments = new();
+
+    private bool isAdmin = false;
+    private List<User> Mechanics = new();
+    private Dictionary<int, int?> SelectedMechanicForAppointment = new();
+
+    private string FeedbackMessage = string.Empty;
+    private string FeedbackCss = "text-success";
+
+    private DateTime _visibleMonth = DateTime.Today;
+    private List<CalendarDay> CalendarDays = new();
+    private readonly string[] WeekDays = { "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom" };
+    private string CurrentMonthYear =>
+      _visibleMonth.ToString("MMMM yyyy", new System.Globalization.CultureInfo("it-IT"));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        var userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdStr is null)
+            throw new UnauthorizedAccessException();
+
+        MechanicId = int.Parse(userIdStr);
+
+        isAdmin = user.IsInRole("Admin");
+
+        Mechanics = await DbContext.Users
+        .Where(u => u.Role == "Mechanic") 
+        .ToListAsync();
+
+        TodayAppointmentsCount = await AppointmentService.GetTodaysCountForMechanicAsync(userIdStr);
+        OngoingRepairsCount = await AppointmentService.GetCurrentAppointmentsCountForMechanicAsync(userIdStr);
+        PendingVehiclesCount = await VeicoloService.GetPendingVehiclesCountForMechanicAsync(userIdStr);
+        PendingQuotesCount = await QuoteService.GetPendingQuotesCountForMechanicAsync(userIdStr);
+
+        var baseQuery = DbContext.Appuntamenti
+            .Include(a => a.Veicolo)
+            .Include(a => a.Utente)
+            .Include(a => a.Servizio)
+            .AsQueryable();
+
+        if (user.IsInRole("Admin"))
+        {
+            AllAppointments = await baseQuery.ToListAsync();
+        }
+        else
+        {
+            AllAppointments = await baseQuery
+                .Where(a => a.MeccanicoId == MechanicId)
+                .ToListAsync();
+        }
+
+        Mechanics = await DbContext.Users
+           .Where(u => u.Role == "Mechanic")
+           .ToListAsync();
+
+        // 6. Popola il dizionario “AppointmentId → MeccanicoId corrente”
+        foreach (var apt in AllAppointments)
+        {
+            SelectedMechanicForAppointment[apt.Id] = apt.MeccanicoId;
+        }
+
+        BuildCalendar();
+        FilterAppointments();
+    }
+
+    void FilterAppointments()
+    {
+        TodayAppointments = AllAppointments
+          .Where(a => a.Inizio.Date == SelectedDate.Date)
+          .ToList();
+
+        UpcomingToday = TodayAppointments
+          .Where(a => a.Inizio > DateTime.Now)
+          .OrderBy(a => a.Inizio)
+          .ToList();
+
+        NextDaysAppointments = AllAppointments
+          .Where(a => a.Inizio.Date > DateTime.Today)
+          .OrderBy(a => a.Inizio)
+          .ToList();
+    }
+
+    void BuildCalendar()
+    {
+        CalendarDays.Clear();
+        var first = new DateTime(_visibleMonth.Year, _visibleMonth.Month, 1);
+        int offset = ((int)first.DayOfWeek + 6) % 7;
+        int daysInMonth = DateTime.DaysInMonth(_visibleMonth.Year, _visibleMonth.Month);
+
+        var prev = Enumerable.Range(1, offset)
+          .Select(i => new CalendarDay { Date = first.AddDays(-offset + i - 1) });
+
+        var curr = Enumerable.Range(1, daysInMonth)
+          .Select(d =>
+          {
+              var dt = first.AddDays(d - 1);
+              return new CalendarDay
+                  {
+                      Date = dt,
+                      HasAppointment = AllAppointments.Any(a => a.Inizio.Date == dt)
+                  };
+          });
+
+        int tail = (7 - (offset + daysInMonth) % 7) % 7;
+        var next = Enumerable.Range(1, tail)
+          .Select(i => new CalendarDay { Date = first.AddDays(daysInMonth + i - 1) });
+
+        CalendarDays.AddRange(prev);
+        CalendarDays.AddRange(curr);
+        CalendarDays.AddRange(next);
+    }
+
+    void PrevMonth() { _visibleMonth = _visibleMonth.AddMonths(-1); BuildCalendar(); }
+    void NextMonth() { _visibleMonth = _visibleMonth.AddMonths(1); BuildCalendar(); }
+    void SelectDate(DateTime dt) { SelectedDate = dt; FilterAppointments(); }
+
+    string GetDayClasses(CalendarDay day) =>
+      "day-cell"
+      + (day.IsToday ? " today" : "")
+      + (day.HasAppointment ? " has-apt" : "")
+      + (day.Date == SelectedDate ? " selected" : "");
+
+    string GetRelativeDay(DateTime dt)
+    {
+        var diff = (dt.Date - DateTime.Today).Days;
+        return diff switch
+        {
+            0 => "Oggi",
+            1 => "Domani",
+            _ => $"{diff} giorni"
+        };
+    }
+
+    private async Task Print()
+      => await JS.InvokeVoidAsync("print");
+
+    private class CalendarDay
+    {
+        public DateTime Date { get; set; }
+        public bool HasAppointment { get; set; }
+        public bool IsToday => Date.Date == DateTime.Today;
+    }
+
+    private void OnMechanicChanged(int appointmentId, string selectedValue)
+    {
+        if (int.TryParse(selectedValue, out var mechId))
+        {
+            SelectedMechanicForAppointment[appointmentId] = mechId;
+        }
+        else
+        {
+            SelectedMechanicForAppointment[appointmentId] = null;
+        }
+    }
+
+    private async Task SaveMechanicAssignment(int appointmentId)
+    {
+        if (SelectedMechanicForAppointment.TryGetValue(appointmentId, out var mechId) && mechId.HasValue)
+        {
+            var app = await DbContext.Appuntamenti.FindAsync(appointmentId);
+            if (app != null)
+            {
+                app.MeccanicoId = mechId.Value;
+                DbContext.Appuntamenti.Update(app);
+                await DbContext.SaveChangesAsync();
+
+                var idx = AllAppointments.FindIndex(a => a.Id == appointmentId);
+                if (idx >= 0)
+                {
+                    AllAppointments[idx].MeccanicoId = mechId.Value;
+                    AllAppointments[idx].Meccanico = Mechanics.First(m => m.Id == mechId.Value);
+                }
+
+                FeedbackMessage = $"Meccanico ID {mechId.Value} è stato registrato all’appuntamento.";
+                FeedbackCss = "text-success";
+
+                FilterAppointments();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task DeleteAppointment(int appointmentId)
+    {
+        var toDelete = await DbContext.Appuntamenti.FindAsync(appointmentId);
+        if (toDelete != null)
+        {
+            DbContext.Appuntamenti.Remove(toDelete);
+            await DbContext.SaveChangesAsync();
+
+            AllAppointments.RemoveAll(a => a.Id == appointmentId);
+
+            FilterAppointments();
+
+            FeedbackMessage = $"Appuntamento ID {appointmentId} eliminato con successo.";
+            FeedbackCss = "text-success";
+
+            StateHasChanged();
+        }
+    }
+
+}

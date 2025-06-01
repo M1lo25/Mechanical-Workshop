@@ -1,0 +1,300 @@
+﻿@page "/chisiamo"
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+                <span class="logo-text">Officina Meccanica Milani</span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/servizi">Servizi</a>
+                <a href="/chisiamo" class="active">Chi Siamo</a>
+                <a href="/contatti">Contatti</a>
+            </nav>
+
+            <div class="icone">
+                <a href="#" class="icona language-switcher" title="Seleziona lingua">
+                    <img src="/Images/Index/BandieraIt.jpg" alt="IT" class="flag-icon" />
+                    <span class="lang-code">IT</span>
+                    <i class="fas fa-chevron-down chevron-icon"></i>
+                </a>
+
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <a href="/login" class="icona" title="Accedi">
+                            <i class="fas fa-user"></i>
+                        </a>
+                    </NotAuthorized>
+                    <Authorized>
+                        <div class="auth-icons">
+                            <a class="icona" role="button" title="Area personale" @onclick="GoToProfile">
+                                <i class="fas fa-user"></i>
+                            </a>
+
+                            <form method="post"
+                                  action="/api/auth/logout"
+                                  class="logout-form"
+                                  style="margin:0; padding:0;">
+                                <input type="hidden" name="returnUrl" value="/" />
+                                <button type="submit" class="icona" title="Esci">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="chi-siamo-page">
+
+        <section class="hero-chi-siamo"
+                 style="background-image: url('/images/ChiSiamo/ChiSiamo.png'); background-position: center; background-size: cover; background-repeat: no-repeat;">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1>Chi Siamo</h1>
+                <p>
+                    Da oltre 20 anni, Officina Meccanica Milani si prende cura della tua auto
+                    con precisione e passione.
+                </p>
+            </div>
+        </section>
+
+        <section class="about-section cs-container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>La Nostra Storia</h2>
+                    <p>
+                        Fondata nel 2001 da Luigi Milani, la nostra officina è diventata negli anni un punto di riferimento per la manutenzione 
+                        e la riparazione auto in Umbria.Grazie a un costante investimento in tecnologie 
+                        moderne e alla formazione continua del nostro personale, offriamo servizi affidabili, rapidi e di alta qualità.
+                        Competenza, trasparenza e attenzione al cliente sono da sempre i valori che guidano il nostro lavoro.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="company-timeline cs-container">
+            <div class="timeline-horizontal">
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2001</span>
+                        <h3>Fondazione</h3>
+                        <p>
+                            Marco Milani apre la sua prima officina in centro a Perugia, iniziando
+                            un percorso di qualità e passione per la meccanica.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2008</span>
+                        <h3>Centro Diagnostico</h3>
+                        <p>
+                            Introduzione del primo banco prova e centro diagnostico per auto,
+                            per offrire riparazioni più rapide e precise.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2015</span>
+                        <h3>Ampliamento</h3>
+                        <p>
+                            Apertura di un secondo capannone,dietro il principale,con area dedicata a tagliandi,revisioni 
+                            e una nuova sala d’attesa per i clienti.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <span class="timeline-year">2023</span>
+                        <h3>Digitalizzazione</h3>
+                        <p>
+                            Lancio del sistema di prenotazione online e integrazione con
+                            diagnostica remota per interventi più rapidi.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="values cs-container">
+            <div class="values-inner -narrow">
+                <h2>I Nostri Valori</h2>
+                <div class="values-grid">
+                    <div class="value-card">
+                        <i class="fas fa-tools fa-2x"></i>
+                        <h3>Qualità</h3>
+                        <p>Utilizziamo solo ricambi e attrezzature di prima scelta.</p>
+                    </div>
+                    <div class="value-card">
+                        <i class="fas fa-shield-alt fa-2x"></i>
+                        <h3>Sicurezza</h3>
+                        <p>Ogni intervento è sottoposto a rigidi controlli di verifica.</p>
+                    </div>
+                    <div class="value-card">
+                        <i class="fas fa-handshake fa-2x"></i>
+                        <h3>Fiducia</h3>
+                        <p>Trasparenza nei costi e comunicazione continua con il cliente.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="statistics cs-container">
+            <h2>Le Nostre Statistiche</h2>
+            <div class="stats-grid">
+                <div class="stat">
+                    <h3>5.000+</h3>
+                    <p>Veicoli Riparati</p>
+                </div>
+                <div class="stat">
+                    <h3>98%</h3>
+                    <p>Clienti Soddisfatti</p>
+                </div>
+                <div class="stat">
+                    <h3>24</h3>
+                    <p>Anni di Esperienza</p>
+                </div>
+                <div class="stat">
+                    <h3>15</h3>
+                    <p>Tecnici Certificati</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="team cs-container">
+            <h2>Il Nostro Team</h2>
+            <div class="team-grid">
+
+                <div class="cardC">
+                    <img src="/images/ChiSiamo/GianfrancoFinarelli.png" alt="Gianfranco Finarelli" />
+                    <div class="cardC-body">
+                        <h3>Gianfranco Finarelli</h3>
+                        <p class="role">Responsabile Officina</p>
+                    </div>
+                </div>
+
+                <div class="cardC">
+                    <img src="/images/ChiSiamo/MarcoMerlini.png" alt="Marco Merlini" />
+                    <div class="cardC-body">
+                        <h3>Marco Merlini</h3>
+                        <p class="role">Meccanico Senior</p>
+                    </div>
+                </div>
+
+                <div class="cardC">
+                    <img src="/images/ChiSiamo/MatteoZucchetti.png" alt="Matteo Zucchetti" />
+                    <div class="card-body">
+                        <h3>Matteo Zucchetti</h3>
+                        <p class="role">Meccanico</p>
+                    </div>
+                </div>
+
+                <div class="cardC">
+                    <img src="/images/ChiSiamo/GiuliaBianchi.png" alt="Giulia Bianchi" />
+                    <div class="cardC-body">
+                        <h3>Giulia Bianchi</h3>
+                        <p class="role">Elettrauto</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="footer-ch">
+        <div class="container footer-main">
+            <div class="footer-col footer-logo">
+                <div class="footer-logo-brand">
+                    <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                    <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+                </div>
+                <p class="footer-piva">P.IVA: 01234567890</p>
+            </div>
+
+            <div class="footer-col footer-contact">
+                <h4>Sede e Contatti</h4>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+            </div>
+
+            <div class="footer-col footer-hours">
+                <h4>Orari di Apertura</h4>
+                <p>
+                    LUN – VEN<br />
+                    8:00 – 12:30<br />
+                    14:30 – 18:00
+                </p>
+            </div>
+
+            <div class="footer-col footer-social">
+                <h4>Seguici</h4>
+                <div class="social-icons">
+                    <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="footer-legal">
+        <div class="container">
+            <p>
+                <a href="/privacy">Privacy Policy</a> |
+                <a href="/cookie">Cookie Policy</a> |
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+@code {
+    private async Task GoToProfile()
+    {
+
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.IsInRole("Admin"))
+        {
+            NavigationManager.NavigateTo("/admin");
+        }
+        else if (user.IsInRole("Mechanic"))
+        {
+            NavigationManager.NavigateTo("/mechanic");
+        }
+        else if (user.IsInRole("Customer"))
+        {
+            NavigationManager.NavigateTo("/customer");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}

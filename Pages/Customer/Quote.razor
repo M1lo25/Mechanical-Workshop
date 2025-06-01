@@ -1,0 +1,397 @@
+﻿@page "/customer/quotes"
+@attribute [Authorize(Roles = "Customer")]
+@using System.Security.Claims
+@using BlazorOfficina.Data.Dtos
+@using BlazorOfficina.Data.Models
+@using BlazorOfficina.Services
+@inject IQuoteService QuoteService
+@inject IVeicoloService VeicoloService
+@inject IServiceService ServiceService
+@inject ISparePartService SparePartService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/customer">Dashboard</a>
+            <a href="/prenota-appuntamento">Appuntamento</a>
+            <a href="/customer/vehicles">Veicoli</a>
+            <a href="/customer/quotes" class="active">Preventivi</a>
+        </nav>
+        <div class="iconeCliente">
+            <a class="icona"><i class="fas fa-bell"></i></a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<div class="quote-form-wrapper app-container">
+    <h3 class="page-title">Crea un nuovo preventivo</h3>
+
+    @if (vehicles is null || servizi is null || spareParts is null)
+    {
+        <p class="loading-text">Caricamento in corso…</p>
+    }
+    else
+    {
+        <form @onsubmit="HandleSubmit" @onsubmit:preventDefault class="quote-form">
+
+            <div class="field-group">
+                <label class="field-label">Veicolo</label>
+                <div class="vehicle-grid">
+                    @foreach (var v in vehicles)
+                    {
+                        <div class="vehicle-card @(model.VeicoloId == v.Id ? "selected" : "")"
+                             @onclick="() => SelectVehicle(v)">
+                            <div class="card-body">
+                                <i class="@GetVehicleIcon(v.Categoria) card-icon fa-fw"></i>
+                                <h5 class="card-title">@v.Marca @v.Modello</h5>
+                                <p class="card-text"><strong>Targa:</strong> @v.Targa</p>
+                                <p class="card-text"><strong>Anno:</strong> @v.Anno</p>
+                                <p class="card-text">
+                                    <strong>Km:</strong>
+                                    @(v.Chilometraggio.HasValue
+                                        ? v.Chilometraggio.Value.ToString("N0")
+                                        : "-")
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    <a class="vehicle-card-add" href="/customer/addVehicle">
+                        <div class="card-body">
+                            <i class="fas fa-plus card-icon"></i>
+                            <span>Aggiungi nuovo veicolo</span>
+                        </div>
+                    </a>
+                </div>
+                @if (model.VeicoloId == 0 && hasAttemptedSubmit)
+                {
+                    <div class="field-error">Seleziona un veicolo.</div>
+                }
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Seleziona i servizi necessari</label>
+                <input type="text"
+                       class="search-input"
+                       placeholder="Cerca servizi…"
+                       @bind="serviceSearch" />
+                <div class="service-grid">
+                    @foreach (var s in servizi
+                   .Where(s => string.IsNullOrWhiteSpace(serviceSearch)
+                   || s.Name.Contains(serviceSearch, StringComparison.OrdinalIgnoreCase))
+                   .OrderBy(s => s.Name))
+                    {
+                        bool isSelected = selectedServiceIds.Contains(s.Id);
+                        <div class="service-card @(isSelected ? "selected" : "")"
+                             @onclick="() => ToggleService(s.Id)">
+                            <h5 class="service-title">@s.Name</h5>
+                            <div class="service-meta">
+                                <span class="price">€ @s.BasePrice.ToString("N0")</span>
+                                <span class="duration">@s.DurationRange</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (!selectedServiceIds.Any() && hasAttemptedSubmit)
+                {
+                    <div class="field-error">Seleziona almeno un servizio.</div>
+                }
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Aggiungi ricambi (opzionale)</label>
+                <input type="text"
+                       class="search-input"
+                       placeholder="Cerca ricambi…"
+                       @bind="spareSearch" />
+                <div class="service-grid">
+                    @foreach (var p in spareParts
+                   .Where(p => string.IsNullOrWhiteSpace(spareSearch)
+                   || p.Name.Contains(spareSearch, StringComparison.OrdinalIgnoreCase)
+                   || p.Code.Contains(spareSearch, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var qty = selectedSpareParts.TryGetValue(p.Id, out var q) ? q : 0;
+                        <div class="service-card">
+                            <h5 class="service-title">@p.Name</h5>
+                            <p class="service-desc">Codice: @p.Code</p>
+                            <div class="service-meta">
+                                <span class="price">€ @p.Price.ToString("N0")</span>
+                                <div class="qty-controls">
+                                    <button type="button"
+                                            @onclick="() => ChangeSpareQty(p.Id, -1)"
+                                            disabled="@(qty == 0)">
+                                        –
+                                    </button>
+                                    <span class="qty">@qty</span>
+                                    <button type="button"
+                                            @onclick="() => ChangeSpareQty(p.Id, +1)">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (selectedSpareParts.Any(kv => kv.Value > 0))
+            {
+                <div class="selected-services-summary">
+                    <h4>Ricambi selezionati</h4>
+                    <ul>
+                        @foreach (var kv in selectedSpareParts.Where(kv => kv.Value > 0))
+                        {
+                            var p = spareParts.First(x => x.Id == kv.Key);
+                            <li>
+                                @p.Name x @kv.Value
+                                <span class="price">€ @(p.Price * kv.Value)</span>
+                            </li>
+                        }
+                    </ul>
+                    <div class="total">
+                        <strong>
+                            Totale ricambi: € @(selectedSpareParts
+                    .Where(kv => kv.Value > 0)
+                    .Sum(kv => spareParts.First(x => x.Id == kv.Key).Price * kv.Value)
+                    .ToString("N2"))
+                        </strong>
+                    </div>
+                    <br>
+                    <div class="total">
+                        <strong>Preventivo totale:</strong>
+                        <strong>€ @(GetTotalEstimate().ToString("N2"))</strong>
+                    </div>
+                </div>
+            }
+
+            <div class="form-actions">
+                <button type="submit" class="primary-button">Richiedi preventivo</button>
+            </div>
+        </form>
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert-success">@successMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert-danger">@errorMessage</div>
+        }
+    }
+</div>
+
+<div class="app-container">
+
+    <h3 class="mech-page-title" style="margin-top:2rem">Preventivi gestiti</h3>
+
+    <div class="mech-quotes-list">
+        <div class="mech-quotes-header">
+            <div class="mech-col-veicolo">Veicolo</div>
+            <div class="mech-col-servizio">Servizio</div>
+            <div class="mech-col-importo">Importo</div>
+            <div class="mech-col-stato">Stato</div>
+            <div class="mech-col-data">Data</div>
+            <div class="mech-col-azioni">Azioni</div>
+        </div>
+
+        @foreach (var q in userQuotes)
+        {
+            <div class="mech-quote-row">
+                <div class="mech-veicolo-cell">
+                    <div class="mech-veicolo-modello">@q.ModelloVeicolo</div>
+                    <div class="mech-veicolo-targa">@q.TargaVeicolo</div>
+                </div>
+
+                <div class="mech-servizio-cell">
+                    <span class="mech-badge-servizio">@q.ServizioNome</span>
+                </div>
+
+                <div class="mech-importo-cell">€ @q.Totale.ToString("N2")</div>
+
+                <div class="mech-stato-cell">
+                    @if (q.Status == PreventivoStatus.Confirmed)
+                    {
+                        <span class="mech-badge-confirmed">Approvato</span>
+                    }
+                    else if (q.Status == PreventivoStatus.Rejected)
+                    {
+                        <span class="mech-badge-rejected">Rifiutato</span>
+                    }
+                    else
+                    {
+                        <span class="mech-badge-pending">In attesa</span>
+                    }
+                </div>
+
+                <div class="mech-data-cell">
+                    @q.DataCreazione.ToString("dd/MM/yyyy")
+                </div>
+
+                <div class="mech-azioni-cell">
+                    <button class="mech-btn-view" title="Visualizza">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<div class="footer-legal">
+    <div class="container">
+        <p>
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/cookie">Cookie Policy</a> |
+        </p>
+    </div>
+</div>>
+
+@code {
+    private List<PreventivoDto> userQuotes = new();
+
+    private CreatePreventivoDto model = new();
+    private List<VeicoloDto> vehicles = null!;
+    private List<ServiceDto> servizi = null!;
+    private List<SparePartDto> spareParts = null!;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private string serviceSearch = "";
+    private List<int> selectedServiceIds = new();
+    private bool hasAttemptedSubmit = false;
+
+    private string spareSearch = "";
+    private Dictionary<int, int> selectedSpareParts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? throw new InvalidOperationException("Utente non autenticato");
+
+        userQuotes = (await QuoteService.GetRecentQuotesAsync(userId, 50))
+                        .OrderByDescending(q => q.DataCreazione)
+                        .ToList();
+
+        vehicles = (await VeicoloService.GetUserVehiclesAsync(userId)).ToList();
+        servizi = (await ServiceService.GetAllAsync()).ToList();
+        spareParts = (await SparePartService.GetAllAsync()).ToList();
+    }
+
+    void SelectVehicle(VeicoloDto v) => model.VeicoloId = v.Id;
+    void ToggleService(int serviceId)
+    {
+        if (selectedServiceIds.Contains(serviceId))
+            selectedServiceIds.Remove(serviceId);
+        else
+            selectedServiceIds.Add(serviceId);
+    }
+    void ChangeSpareQty(int spareId, int delta)
+    {
+        selectedSpareParts.TryGetValue(spareId, out var q);
+        var n = Math.Max(0, q + delta);
+        if (n > 0) selectedSpareParts[spareId] = n;
+        else selectedSpareParts.Remove(spareId);
+    }
+
+    private bool CanSubmit =>
+        model.VeicoloId > 0 &&
+        selectedServiceIds.Any();
+
+    private async Task HandleSubmit()
+    {
+        hasAttemptedSubmit = true;
+        if (!CanSubmit) return;
+
+        model.ServiziIds = selectedServiceIds;
+        model.Ricambi = selectedSpareParts
+            .Select(kv => new SparePartItemDto(kv.Key, kv.Value))
+            .ToList();
+
+        try
+        {
+            var uid = (await AuthStateProvider.GetAuthenticationStateAsync())
+                          .User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            await QuoteService.CreatePreventivoAsync(model, uid);
+            successMessage = "Richiesta di preventivo inviata!Riceverai una messaggio via mail una volta che il meccanico l'ha esaminata.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private string GetVehicleIcon(CategoriaVeicolo tipo) => tipo switch
+    {
+        CategoriaVeicolo.Auto => "fas fa-car",
+        CategoriaVeicolo.Pickup => "fas fa-truck-pickup",
+        CategoriaVeicolo.Furgone => "fas fa-truck",
+        CategoriaVeicolo.Moto => "fas fa-motorcycle",
+        _ => "fas fa-question-circle"
+    };
+
+    private decimal GetServicesTotal() =>
+    servizi.Where(s => selectedServiceIds.Contains(s.Id))
+           .Sum(s => s.BasePrice);
+
+    private decimal GetSparePartsTotal() =>
+        selectedSpareParts.Where(kv => kv.Value > 0)
+            .Sum(kv => spareParts.First(x => x.Id == kv.Key).Price * kv.Value);
+
+    private decimal GetTotalEstimate() =>
+        GetServicesTotal() + GetSparePartsTotal();
+
+}

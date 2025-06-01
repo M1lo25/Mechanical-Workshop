@@ -1,0 +1,254 @@
+﻿@page "/customer/vehicles"
+@attribute [Authorize(Roles = "Customer")]
+
+@using BlazorOfficina.Data.Dtos
+@using BlazorOfficina.Services
+@using System.Security.Claims
+@using BlazorOfficina.Data.Models
+@using Microsoft.JSInterop
+
+@inject IVeicoloService VehicleService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/customer">Dashboard</a>
+            <a href="/prenota-appuntamento">Appuntamento</a>
+            <a href="/customer/vehicles" class="active">Veicoli</a>
+            <a href="/customer/quotes">Preventivi</a>
+        </nav>
+        <div class="iconeCliente">
+            <a class="icona">
+                <i class="fas fa-bell"></i>
+            </a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<div class="container py-4">
+
+    @if (isLoading)
+    {
+        <p class="veh-msg">Caricamento veicoli…</p>
+    }
+    else if (vehicles.Count == 0)
+    {
+        <div class="veh-header">
+            <h3 class="veh-header__title">Le tue auto</h3>
+            <button class="veh-header__add-btn" @onclick="AddVehicle">
+                <i class="fas fa-plus veh-header__icon"></i> Aggiungi Veicolo
+            </button>
+        </div>
+
+        <div class="veh-grid">
+            <div class="veh-card veh-card--add" @onclick="AddVehicle">
+                <div class="veh-card__body veh-card__body--center">
+                    <i class="fas fa-plus-circle veh-card__add-icon"></i>
+                    <p>Aggiungi il tuo primo veicolo</p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="veh-header">
+            <h3 class="veh-header__title">Le tue auto</h3>
+            <button class="veh-header__add-btn" @onclick="AddVehicle">
+                <i class="fas fa-plus veh-header__icon"></i>
+                Aggiungi Auto
+            </button>
+        </div>
+
+        <div class="veh-vehicles">
+            <div class="veh-grid">
+                @foreach (var v in vehicles)
+                {
+                    <div class="veh-card">
+                        <div class="veh-card__body">
+                            <div class="veh-card__top">
+                                <h5 class="veh-card__title">@v.Marca @v.Modello</h5>
+                                <span class="veh-badge">Registrata</span>
+                            </div>
+                            <p><strong>Targa:</strong> @v.Targa</p>
+                            <p>
+                                Ultimo intervento:
+                                @(v.UltimoIntervento > DateTime.MinValue
+                                    ? string.Format("{0:dd/MM/yyyy}", v.UltimoIntervento)
+                                    : "MAI")
+                            </p>
+                            <p>
+                                <i class="fas fa-euro-sign"></i>
+                                @(v.SpesaTotale > 0
+                                  ? v.SpesaTotale.ToString("N2")
+                                  : "0,00")
+                            </p>
+                        </div>
+                        <div class="veh-card__footer">
+                            <a @onclick='() => NavigationManager.NavigateTo($"/customer/storico-interventi")'>
+                                <i class="fas fa-history"></i> Storico
+                            </a>
+                            <a @onclick='() => NavigationManager.NavigateTo($"/prenota-appuntamento")'>
+                                <i class="fas fa-calendar-plus"></i> Prenota
+                            </a>
+                            <a class="veh-btn-delete"
+                                    title="Elimina veicolo"
+                                    @onclick="() => DeleteVehicle(v.Id)">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+
+                <div class="veh-card veh-card--add" @onclick="AddVehicle">
+                    <div class="veh-card__body veh-card__body--center">
+                        <i class="fas fa-plus-circle veh-card__add-icon"></i>
+                        <p>Aggiungi un nuovo veicolo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="in-repair-section">
+        <h4 class="section-header">Auto in officina</h4>
+
+        @if (!vehicles.Any(v => v.Stato == StatoRiparazione.InRiparazione))
+        {
+            <div class="veh-grid">
+                <div class="veh-card veh-card--empty">
+                    <div class="veh-card__body veh-card__body--center">
+                        <p>Nessuna auto in officina</p>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="veh-grid">
+                @foreach (var v in vehicles.Where(v => v.Stato == StatoRiparazione.InRiparazione))
+                {
+                    <div class="veh-card">
+                        <div class="veh-card__body">
+                            <div class="veh-card__top">
+                                <h5 class="veh-card__title">@v.Marca @v.Modello</h5>
+                                <span class="veh-badge veh-badge--repair">
+                                    <i class="fas fa-wrench"></i> In riparazione
+                                </span>
+                            </div>
+
+                            <p class="veh-text">
+                                <strong>Avanzamento:</strong>
+                                <span class="veh-text--right">@v.PercentualeRiparazione% </span>
+                            </p>
+
+                            <div class="veh-progress">
+                                <div class="veh-progress__bar" style="width:@v.PercentualeRiparazione%"></div>
+                            </div>
+
+                            <p class="veh-text"><strong>Intervento</strong></p>
+                            <p class="veh-text-muted">@v.InterventoCorrente</p>
+                        </div>
+
+                        <div class="veh-card__footer">
+                            <div class="veh-small-text">
+                                <div>Inizio: @v.DataInizio?.ToString("dd/MM/yyyy")</div>
+                                <div>Stimato: @v.DataPrevisto?.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <a class="veh-link" @onclick="() => ShowDetails(v.Id)">
+                                Dettagli <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+
+</div>
+
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br />Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+@code {
+    private List<VeicoloDto> vehicles = new();
+    private bool isLoading = true;
+    private string? userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userId))
+            vehicles = await VehicleService.GetUserVehiclesAsync(userId);
+        isLoading = false;
+    }
+
+    private void AddVehicle() =>
+      NavigationManager.NavigateTo("/customer/addVehicle");
+
+    private void ShowDetails(int id) =>
+      NavigationManager.NavigateTo($"/customer/vehicles/{id}");
+
+    private async Task DeleteVehicle(int id)
+    {
+        var ok = await JSRuntime.InvokeAsync<bool>(
+          "confirm",
+          new object?[] { $"Elimini il veicolo #{id}?" }
+        );
+        if (!ok) return;
+
+        await VehicleService.DeleteAsync(id);
+        vehicles = await VehicleService.GetUserVehiclesAsync(userId!);
+    }
+}

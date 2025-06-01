@@ -1,0 +1,79 @@
+@page "/"
+@namespace BlazorOfficina.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Web
+@attribute [AllowAnonymous]
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Officina</title>
+    <base href="~/" />
+
+    <!-- FontAwesome (CDN) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+          rel="stylesheet" />
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;800&display=swap"
+          rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=DM+Sans:wght@400;700&display=swap"
+          rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- I tuoi CSS “statici” -->
+    <link href="css/Index/index.css" rel="stylesheet" />
+    <link href="css/Index/servizi.css" rel="stylesheet" />
+    <link href="css/Index/contatti.css" rel="stylesheet" />
+    <link href="css/Index/chisiamo.css" rel="stylesheet" />
+
+    <link href="css/Registrazione/register.css" rel="stylesheet" />
+    <link href="css/Registrazione/login.css" rel="stylesheet" />
+    <link href="css/Registrazione/forgotpassword.css" rel="stylesheet" />
+    <link href="css/Registrazione/resetpassword.css" rel="stylesheet" />
+
+    <link href="css/Customer/CustomerDashboard.css" rel="stylesheet" />
+    <link href="css/Customer/appointmentForm.css" rel="stylesheet" />
+    <link href="css/Customer/addVehicle.css" rel="stylesheet" />
+    <link href="css/Customer/Vehicles.css" rel="stylesheet" />
+    <link href="css/Customer/Quote.css" rel="stylesheet" />
+    <link href="css/Customer/storicoInterventi.css" rel="stylesheet" />
+
+    <link href="css/Mechanic/mechanicDashboard.css" rel="stylesheet" />
+    <link href="css/Mechanic/Clients.css" rel="stylesheet" />
+    <link href="css/Mechanic/mechanicAppointments.css" rel="stylesheet" />
+    <link href="css/Mechanic/mechanicVehicles.css" rel="stylesheet" />
+    <link href="css/Mechanic/preventivi.css" rel="stylesheet" />
+
+    <link href="css/Admin/adminDashboard.css" rel="stylesheet" />
+    <link href="css/Admin/gestioneUtenti.css" rel="stylesheet" />
+    <script src="js/adminDashboard.js"></script>
+
+
+    <!-- (eventuale) stile in pagina -->
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        input.input-field:-webkit-autofill,
+        input.input-field:-webkit-autofill:hover,
+        input.input-field:-webkit-autofill:focus,
+        input.input-field:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0px 1000px #171717 inset !important;
+            -webkit-text-fill-color: #ddd !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
+</head>
+<body>
+    <app>
+        <component type="typeof(App)" render-mode="ServerPrerendered" />
+    </app>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

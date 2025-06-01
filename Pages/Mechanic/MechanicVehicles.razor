@@ -1,0 +1,290 @@
+﻿@page "/mechanic/vehicles"
+@attribute [Authorize(Roles = "Mechanic,Admin")]
+@using System.Security.Claims
+@using BlazorOfficina.Data.Models
+@using BlazorOfficina.Data.Dtos
+@using Microsoft.JSInterop
+
+@inject IVeicoloService VeicoloService
+@inject IAppointmentService AppointmentService
+@inject IRepairService RepairService
+@inject IQuoteService QuoteService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text">Officina Meccanica Milani</span>
+        </a>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <nav class="nav-links">
+                    <a href="/admin">Dashboard</a>
+                    <a href="/mechanic/appointments">Appuntamenti</a>
+                    <a href="/mechanic/preventivi">Preventivi</a>
+                    <a href="/mechanic/vehicles" class="active">Veicoli</a>
+                    <a href="/admin/gestioneUtenti">Gestione Utenti</a>
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Mechanic">
+            <Authorized>
+                <nav class="nav-links">
+                    <a href="/mechanic">Dashboard</a>
+                    <a href="/mechanic/appointments">Appuntamenti</a>
+                    <a href="/mechanic/preventivi">Preventivi</a>
+                    <a href="/mechanic/customers">Clienti</a>
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+        <div class="iconeCliente">
+            <a class="icona"><i class="fas fa-bell"></i></a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<!-- StatCards -->
+<AuthorizeView Roles="Mechanic">
+    <Authorized>
+        <section class="stats-cards-mechanic">
+            <div class="stat-card-mechanic card-appointment">
+                <div class="stat-icon-mechanic"><i class="fas fa-calendar-day"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Appuntamenti oggi</div>
+                    <div class="stat-value-mechanic">@TodayAppointmentsCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-repair">
+                <div class="stat-icon-mechanic"><i class="fas fa-tools"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Riparazioni in corso</div>
+                    <div class="stat-value-mechanic">@OngoingRepairsCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-vehicle">
+                <div class="stat-icon-mechanic"><i class="fas fa-car-side"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Veicoli in attesa</div>
+                    <div class="stat-value-mechanic">@PendingVehiclesCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-quote">
+                <div class="stat-icon-mechanic"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Preventivi da confermare</div>
+                    <div class="stat-value-mechanic">@PendingQuotesCount</div>
+                </div>
+            </div>
+        </section>
+    </Authorized>
+</AuthorizeView>
+
+<!-- Toolbar di ricerca & filtro -->
+<div class="mv-tools">
+    <input class="mv-input mv-input--search"
+           placeholder="Cerca veicolo (targa, marca, modello…)"
+           @bind="searchTerm" />
+
+    <select class="mv-select" @bind="statusFilter">
+        <option value="">Tutti gli stati</option>
+        <option value="In lavorazione">In lavorazione</option>
+        <option value="In parcheggio">In parcheggio</option>
+        <option value="Da revisionare">Da revisionare</option>
+        <option value="In attesa">In attesa</option>
+    </select>
+
+    <button class="mv-button mv-button--primary" @onclick="ApplyFilter">
+        <i class="fas fa-filter"></i> Filtra
+    </button>
+</div>
+
+<!-- Lista veicoli come card-grid -->
+<div class="mv-quotes-list">
+    <!-- header colonne -->
+    <div class="mv-quotes-header mv-quotes-header--vehicles">
+        <div class="mv-col--client">Cliente</div>
+        <div class="mv-col--vehicle">Veicolo</div>
+        <div class="mv-col--plate">Targa</div>
+        <div class="mv-col--status">Stato</div>
+        <div class="mv-col--km">Chilometraggio</div>
+        <div class="mv-col--actions">Azioni</div>
+    </div>
+
+    @foreach (var v in filteredVehicles)
+    {
+        <div class="mv-quote-row mv-quote-row--vehicle">
+            <div class="mv-cell--client">
+                <div class="mv-client__name">@v.CustomerName</div>
+                <div class="mv-client__email">@v.CustomerEmail</div>
+            </div>
+            <div class="mv-cell--vehicle">
+                <div>@v.Marca @v.Modello</div>
+            </div>
+            <div class="mv-cell--plate">
+                <div>@v.Targa</div>
+            </div>
+            <div class="mv-cell--status">
+                <span class="@GetBadgeClass(v.Stato)">@v.Stato</span>
+            </div>
+            <div class="mv-cell--km">
+                <div>@(v.Chilometraggio?.ToString("N0") ?? "-") km</div>
+            </div>
+            <div class="mv-cell--actions">
+                <button class="mv-action mv-action--view" title="Visualizza">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="mv-action mv-action--edit" title="Modifica">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
+                        <button class="mv-action mv-action--delete"
+                                title="Elimina"
+                                @onclick="() => OnDeleteVehicle(v.VehicleId)">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <!-- Colonna 2: sede e contatti -->
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <!-- Colonna 3: orari di apertura -->
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <!-- Colonna 4: social + WhatsApp -->
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- Riga note legali -->
+<div class="footer-legal">
+    <div class="container">
+        <p>
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/cookie">Cookie Policy</a> |
+        </p>
+    </div>
+</div>
+
+@code {
+    // — Statistiche —
+    private int TodayAppointmentsCount;
+    private int OngoingRepairsCount;
+    private int PendingVehiclesCount;
+    private int PendingQuotesCount;
+
+    // — Veicoli —
+    private List<MechanicVehicleDto> vehicles = new();
+    private IEnumerable<MechanicVehicleDto> filteredVehicles =>
+      vehicles.Where(v =>
+        (string.IsNullOrWhiteSpace(searchTerm)
+          || v.Targa.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+          || v.Marca.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+          || v.Modello.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+        && (string.IsNullOrWhiteSpace(statusFilter) || v.Stato == statusFilter)
+      );
+
+    private string searchTerm = "";
+    private string statusFilter = "";
+
+    // — Meccanico ID —
+    private int MechanicId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var idClaim = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? throw new UnauthorizedAccessException();
+        MechanicId = int.Parse(idClaim);
+
+        TodayAppointmentsCount = await AppointmentService.GetTodaysCountForMechanicAsync(idClaim);
+        OngoingRepairsCount = await AppointmentService.GetCurrentAppointmentsCountForMechanicAsync(idClaim);
+        PendingVehiclesCount = await VeicoloService.GetPendingVehiclesCountForMechanicAsync(idClaim);
+        PendingQuotesCount = await QuoteService.GetPendingQuotesCountForMechanicAsync(idClaim);
+
+        vehicles = await VeicoloService.GetAllWithCustomerAsync();
+    }
+
+    private void ApplyFilter()
+    {
+        // Il binding e la property filteredVehicles riflettono automaticamente il filtro
+    }
+
+    private string GetBadgeClass(string stato) =>
+      stato.Replace(" ", "").ToLower() switch
+      {
+          "inlavorazione" => "mv-badge mv-badge--inlavorazione",
+          "inparcheggio" => "mv-badge mv-badge--inparcheggio",
+          "darevisionare" => "mv-badge mv-badge--darevisionare",
+          "inattesa" => "mv-badge mv-badge--inattesa",
+          _ => "mv-badge mv-badge--default"
+      };
+
+    private void ViewVehicle(int id) => NavManager.NavigateTo($"/mechanic/vehicle/{id}");
+    private void EditVehicle(int id) => NavManager.NavigateTo($"/mechanic/vehicle/edit/{id}");
+
+    private async Task OnDeleteVehicle(int vehicleId)
+    {
+        // 1) chiedi conferma all’utente
+        var ok = await JS.InvokeAsync<bool>("confirm",
+            "Sei sicuro di voler eliminare questo veicolo?");
+        if (!ok)
+            return;
+
+        // 2) chiama il service
+        await VeicoloService.DeleteVehicleAsync(vehicleId);
+        // oppure await VeicoloService.DeleteAsync(vehicleId);
+
+        // 3) aggiorna la lista in pagina
+        vehicles.RemoveAll(v => v.VehicleId == vehicleId);
+        StateHasChanged();
+    }
+
+}

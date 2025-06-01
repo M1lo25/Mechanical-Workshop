@@ -1,0 +1,518 @@
+﻿@page "/prenota-appuntamento"
+@attribute [Authorize(Roles = "Customer")]
+
+@using System.Globalization
+@using System.Linq
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Forms
+@using BlazorOfficina.Data.Dtos
+@using BlazorOfficina.Services
+@using BlazorOfficina.Data.Models
+
+@inject IBookingService BookingService
+@inject IVeicoloService VeicoloService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/customer">Dashboard</a>
+            <a href="/prenota-appuntamento" class="active">Appuntamento</a>
+            <a href="/customer/vehicles">Veicoli</a>
+            <a href="/customer/quotes">Preventivi</a>
+        </nav>
+        <div class="iconeCliente">
+            <a class="icona"><i class="fas fa-bell"></i></a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<div class="bf-booking-container">
+    <!-- *** MAIN PANEL *** -->
+    <div class="bf-main-panel">
+        <EditForm Model="this" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <!-- VEICOLO COME GRID DI CARD -->
+            <div class="bf-form-section">
+                <label class="bf-field-label">Veicolo</label>
+                <div class="bf-vehicle-grid">
+                    @foreach (var v in Vehicles)
+                    {
+                        <div class="bf-vehicle-card @(SelectedVehicleId == v.Id ? "bf-vehicle-card-selected" : "")"
+                             @onclick="() => SelectVehicle(v.Id)">
+                            <div class="bf-card-body">
+                                <i class="@GetVehicleIcon(v.Categoria) bf-card-icon fa-fw"></i>
+                                <h5 class="bf-card-title">@v.Marca @v.Modello</h5>
+                                <p class="bf-card-text"><strong>Targa:</strong> @v.Targa</p>
+                                <p class="bf-card-text"><strong>Anno:</strong> @v.Anno</p>
+                                <p class="bf-card-text">
+                                    <strong>Km:</strong>
+                                    @(v.Chilometraggio.HasValue ? v.Chilometraggio.Value.ToString("N0") : "-")
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    <a class="bf-vehicle-card-add" href="/customer/addVehicle">
+                        <div class="bf-card-body">
+                            <i class="fas fa-plus bf-card-icon"></i>
+                            <span>Aggiungi nuovo veicolo</span>
+                        </div>
+                    </a>
+                </div>
+
+                @if (SelectedVehicleId == 0 && HasAttemptedSubmit)
+                {
+                    <div class="bf-field-error">Seleziona un veicolo.</div>
+                }
+            </div>
+
+            <!-- SERVIZIO COME SINGLE-SELECT -->
+            <div class="bf-form-section">
+                <br /><br />
+                <label class="bf-field-label">Seleziona il servizio</label>
+
+                <input type="text"
+                       class="bf-search-input"
+                       placeholder="Cerca servizi…"
+                       @bind="serviceSearch" />
+
+                <div class="bf-service-grid">
+                    @foreach (var s in Services
+                    .Where(s => string.IsNullOrWhiteSpace(serviceSearch)
+                    || s.Name.Contains(serviceSearch, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(s => s.Name))
+                    {
+                        <div class="bf-service-card @(SelectedServiceId == s.Id ? "bf-service-selected" : "")"
+                             @onclick="() => SelectService(s.Id)">
+                            <h5 class="bf-service-title">@s.Name</h5>
+                            <div class="bf-service-meta">
+                                <span class="bf-service-price">€ @s.BasePrice.ToString("N0")</span>
+                                <span class="bf-service-duration">@s.DurationRange</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (SelectedServiceId == 0 && HasAttemptedSubmit)
+                {
+                    <div class="bf-field-error">Seleziona un servizio.</div>
+                }
+            </div>
+
+            <!-- GIORNO E ORARIO -->
+            <br /><br /><br />
+            <label class="bf-field-label">Seleziona il giorno e orario</label>
+
+            <!-- CALENDARIO CUSTOM -->
+            <div class="bf-calendar-container">
+                <div class="bf-calendar-header">
+                    <button type="button" class="bf-arrow" @onclick="PrevMonth">&#8249;</button>
+                    <div class="bf-month-year">@CurrentMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture)</div>
+                    <button type="button" class="bf-arrow" @onclick="NextMonth">&#8250;</button>
+                </div>
+                <div class="bf-calendar-weekdays">
+                    @foreach (var wd in WeekDayNames)
+                    {
+                        <div class="bf-weekday">@wd</div>
+                    }
+                </div>
+                <div class="bf-calendar-days">
+                    @foreach (var day in CalendarDays)
+                    {
+                        <div class="
+              bf-day
+              @(day.IsCurrentMonth ? "" : "bf-day-disabled")
+              @(day.Date.Date == SelectedDate.Date ? "bf-day-selected" : "")
+              @(day.Date.Date == DateTime.Today ? "bf-day-today" : "")
+                " @onclick="() => OnDayClick(day)">
+                            @day.Date.Day
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- SLOT ORARI DISPONIBILI -->
+            <InputRadioGroup @bind-Value="SelectedSlotIndex" class="bf-slots-grid">
+                @if (AvailableSlots.Count == 0)
+                {
+                    <div class="bf-no-slots">Nessuno slot disponibile per questa data</div>
+                }
+                else
+                {
+                    @for (int i = 0; i < AvailableSlots.Count; i++)
+                    {
+                        var slot = AvailableSlots[i];
+                        <label class="bf-slot @(SelectedSlotIndex == i ? "bf-slot-selected" : "bf-slot-available")"
+                               @onclick="() => SelectSlot(i)">
+                            <InputRadio Value="i" />
+                            <div class="bf-slot-time">
+                                @slot.Start.ToString("HH:mm") – @slot.End.ToString("HH:mm")
+                            </div>
+                            <div class="bf-slot-label">
+                                @(SelectedSlotIndex == i ? "Selezionato" : "Disponibile")
+                            </div>
+                        </label>
+                    }
+                }
+            </InputRadioGroup>
+
+            <!-- NOTE -->
+            <div class="bf-form-section">
+                <label>Note</label>
+                <InputTextArea @bind-Value="Notes" class="bf-input-field" />
+            </div>
+
+            <!-- MODALITÀ CONSEGNA -->
+            <div class="bf-form-section">
+                <label>Modalità consegna</label>
+                <InputSelect @bind-Value="SelectedDeliveryMode" class="bf-input-field">
+                    @foreach (var m in Enum.GetValues<DeliveryMode>())
+                    {
+                        <option value="@m">@m</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <!-- PREFERENZE CONTATTO -->
+            <div class="bf-form-section">
+                <label>Preferenze contatto</label>
+                @foreach (var item in PreferenceItems)
+                {
+                    <div class="bf-pref-item">
+                        <InputCheckbox @bind-Value="item.Selected" />
+                        <span>@item.Key</span>
+                    </div>
+                }
+            </div>
+
+            <!-- PULSANTE PRENOTA -->
+            <button type="submit" class="bf-btn-next">Prenota</button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <div class="@MsgCss">@Message</div>
+        }
+    </div>
+
+    <!-- *** SIDEBAR (info, contatti) *** -->
+    <aside class="bf-sidebar">
+        <div class="bf-card">
+            <h4>Informazioni importanti</h4>
+            <div class="bf-item"><i class="icon-calendar"></i> Porta con te la carta di circolazione</div>
+            <div class="bf-item"><i class="icon-clock"></i> Presentati 10 minuti prima</div>
+            <div class="bf-item"><i class="icon-ban"></i> Annulla con almeno 24 h di anticipo</div>
+        </div>
+
+        <div class="bf-card">
+            <h4>I tuoi prossimi appuntamenti</h4>
+            @if (!UpcomingAppointments.Any())
+            {
+                <p class="bf-no-appointments">Nessun appuntamento prenotato.</p>
+            }
+            else
+            {
+                <ul class="bf-appointments-list">
+                    @foreach (var app in UpcomingAppointments)
+                    {
+                        <li class="bf-appointment-item">
+                            <div class="bf-apt-date">@app.DataAppuntamento.ToString("dd/MM/yyyy")</div>
+                            <div class="bf-apt-time">@app.DataAppuntamento.ToString("HH:mm")</div>
+                            <div class="bf-apt-service">@app.Tipo</div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="bf-card contact-card">
+            <h4>Contatti</h4>
+            <div><i class="fas fa-phone-alt"></i> 02 1234567</div>
+            <div><i class="fas fa-envelope"></i> info@officinarossi.it</div>
+            <div><i class="fas fa-map-marker-alt"></i> Via Roma 123, Milano</div>
+        </div>
+    </aside>
+</div>
+
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<div class="footer-legal">
+    <div class="container">
+        <p>
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/cookie">Cookie Policy</a> |
+        </p>
+    </div>
+</div>>
+
+
+@code {
+    List<ServiceDto> Services = new();
+    List<VeicoloDto> Vehicles = new();
+    List<AvailableSlotDto> AvailableSlots = new();
+    List<AppuntamentoDto> UpcomingAppointments = new();
+
+    int SelectedVehicleId;
+    int SelectedServiceId;
+    DateTime SelectedDate = DateTime.Today;
+    int SelectedSlotIndex = -1;
+    string Notes = string.Empty;
+    DeliveryMode SelectedDeliveryMode = DeliveryMode.InOfficina;
+    List<PreferenceItem> PreferenceItems = new();
+
+    bool HasAttemptedSubmit = false;
+
+    string serviceSearch = "";
+    void SelectService(int id) => SelectedServiceId = id;
+
+    string? Message;
+    string MsgCss = string.Empty;
+
+    DateTime CurrentMonth = DateTime.Today;
+    List<string> WeekDayNames = CultureInfo.CurrentCulture
+                                  .DateTimeFormat
+                                  .AbbreviatedDayNames
+                                  .Select(n => n.Substring(0, 2))
+                                  .ToList();
+    List<DayInfo> CalendarDays = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        PreferenceItems = Enum.GetValues<ContactPreferences>()
+                              .Select(cp => new PreferenceItem { Key = cp })
+                              .ToList();
+
+        Services = await BookingService.GetAllServicesAsync();
+
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var uid = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (uid is null)
+        {
+            Message = "Utente non autenticato";
+            MsgCss = "text-danger";
+            return;
+        }
+
+        Vehicles = await VeicoloService.GetUserVehiclesAsync(uid);
+
+        var allApps = await BookingService.GetRecentAppointmentsAsync(uid);
+        UpcomingAppointments = allApps
+          .Where(a => a.DataAppuntamento > DateTime.Now)
+          .OrderBy(a => a.DataAppuntamento)
+          .ToList();
+
+        BuildCalendar();
+        await GenerateSlots();
+    }
+
+    void SelectVehicle(int vehicleId)
+    {
+        SelectedVehicleId = vehicleId;
+    }
+
+    async Task GenerateSlots()
+    {
+        var date = SelectedDate.Date;
+
+        var existingAppointments = await BookingService.GetAppointmentsByDateAsync(date);
+
+        var slots = new List<AvailableSlotDto>();
+        for (int i = 0; i < 6; i++)
+        {
+            var start = date.AddHours(9 + i);   
+            var end = start.AddHours(1);      
+            slots.Add(new AvailableSlotDto(start, end));
+        }
+
+        var now = DateTime.Now;
+
+        var filtered = slots
+          .Where(slot =>
+            !existingAppointments.Any(app =>
+               slot.Start < app.EndTime
+            && slot.End > app.DataAppuntamento)
+
+            && slot.Start > now
+          )
+          .ToList();
+
+        AvailableSlots = filtered;
+        SelectedSlotIndex = -1;
+        StateHasChanged();
+    }
+
+    async Task OnDayClick(DayInfo day)
+    {
+        if (!day.IsCurrentMonth) return;
+
+        SelectedDate = day.Date;
+        BuildCalendar();
+        await GenerateSlots();
+    }
+
+    void BuildCalendar()
+    {
+        CalendarDays.Clear();
+        var first = new DateTime(CurrentMonth.Year, CurrentMonth.Month, 1);
+        int offset = ((int)first.DayOfWeek + 6) % 7;
+        var start = first.AddDays(-offset);
+
+        for (int i = 0; i < 42; i++)
+        {
+            var d = start.AddDays(i);
+            CalendarDays.Add(new DayInfo
+                {
+                    Date = d,
+                    IsCurrentMonth = (d.Month == CurrentMonth.Month)
+                });
+        }
+    }
+
+    void PrevMonth()
+    {
+        CurrentMonth = CurrentMonth.AddMonths(-1);
+        BuildCalendar();
+        _ = GenerateSlots(); 
+    }
+
+    void NextMonth()
+    {
+        CurrentMonth = CurrentMonth.AddMonths(1);
+        BuildCalendar();
+        _ = GenerateSlots();
+    }
+
+    void SelectSlot(int i) => SelectedSlotIndex = i;
+
+    async Task HandleSubmit()
+    {
+        HasAttemptedSubmit = true;
+
+        if (SelectedVehicleId == 0
+          || SelectedServiceId == 0
+          || SelectedSlotIndex < 0)
+        {
+            Message = "Seleziona veicolo, servizio e orario.";
+            MsgCss = "text-danger";
+            return;
+        }
+
+        var slot = AvailableSlots[SelectedSlotIndex];
+
+        var prefs = PreferenceItems
+          .Where(x => x.Selected)
+          .Select(x => x.Key)
+          .Aggregate(ContactPreferences.None, (acc, cp) => acc | cp);
+
+        var dto = new CreateAppointmentDto(
+          SelectedVehicleId,
+          SelectedServiceId,
+          slot.Start,
+          slot.End,
+          Notes,
+          SelectedDeliveryMode,
+          prefs
+        );
+
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var uid = auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            await BookingService.CreateAsync(uid, dto);
+
+            Message = "Appuntamento prenotato con successo!";
+            MsgCss = "text-success";
+
+            SelectedSlotIndex = -1;
+            Notes = string.Empty;
+            PreferenceItems.ForEach(it => it.Selected = false);
+            HasAttemptedSubmit = false;
+
+            await GenerateSlots();
+
+            var allApps = await BookingService.GetRecentAppointmentsAsync(uid);
+            UpcomingAppointments = allApps
+              .Where(a => a.DataAppuntamento > DateTime.Now)
+              .OrderBy(a => a.DataAppuntamento)
+              .ToList();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Message = $"Errore: {ex.Message}";
+            MsgCss = "text-danger";
+        }
+    }
+
+    class PreferenceItem
+    {
+        public ContactPreferences Key { get; set; }
+        public bool Selected { get; set; }
+    }
+
+    private string GetVehicleIcon(CategoriaVeicolo tipo) => tipo switch
+    {
+        CategoriaVeicolo.Auto => "fas fa-car",
+        CategoriaVeicolo.Pickup => "fas fa-truck-pickup",
+        CategoriaVeicolo.Furgone => "fas fa-truck",
+        CategoriaVeicolo.Moto => "fas fa-motorcycle",
+        _ => "fas fa-question-circle"
+    };
+
+    class DayInfo
+    {
+        public DateTime Date { get; set; }
+        public bool IsCurrentMonth { get; set; }
+    }
+
+}

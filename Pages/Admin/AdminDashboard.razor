@@ -1,0 +1,464 @@
+﻿@page "/admin"
+@attribute [Authorize(Roles = "Admin")]
+
+@using System.Security.Claims
+@using BlazorOfficina.Services
+@using BlazorOfficina.Data
+@using BlazorOfficina.Data.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IRepairService RepairService
+@inject IAppointmentService AppointmentService
+@inject IVeicoloService VeicoloService
+@inject IQuoteService QuoteService
+@inject IUserService UserService
+@inject IJSRuntime JSRuntime
+
+<div class="layout-container customer-dashboard">
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+                <span class="logo-text ms-2">Officina Meccanica Milani</span>
+            </a>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/servizi">Servizi</a>
+                <a href="/chisiamo">Chi Siamo</a>
+                <a href="/contatti">Contatti</a>
+            </nav>
+            <div class="iconeCliente">
+                <a class="icona">
+                    <i class="fas fa-bell"></i>
+                </a>
+                <AuthorizeView>
+                    <Authorized>
+                        <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                            <input type="hidden" name="returnUrl" value="/" />
+                            <button type="submit" class="icona" title="Esci">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </form>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+
+    <div class="d-flex main-content">
+        <aside class="sidebar bg-light border-end">
+            <div class="user-profile">
+                <img src="@ProfileImageUrl"
+                     alt="Foto profilo di @UserName"
+                     class="avatar" />
+                <div class="user-info">
+                    <div class="user-name">@UserName</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav px-2 py-3">
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/admin" Match="NavLinkMatch.All">
+                            <i class="fa-solid fa-tachometer-alt me-2"></i> Dashboard
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic/appointments">
+                            <i class="fa-solid fa-calendar-days me-2"></i> Appuntamenti
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic/preventivi">
+                            <i class="fa-solid fa-file-invoice-dollar me-2"></i> Preventivi
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic/vehicles">
+                            <i class="fa-solid fa-car-side me-2"></i> Veicoli
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/admin/gestioneUtenti">
+                            <i class="fa-solid fa-users me-2"></i> Gestione Utenti
+                        </NavLink>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="dashboard-panel">
+
+            <section class="dashboard-header">
+                <div class="welcome-text">
+                    <h2>Benvenuto, @UserName!</h2>
+                    <p>Ecco una panoramica delle tue attività con Officina Milani</p>
+                </div>
+            </section>
+
+            <section class="stats-cards">
+                <div class="stat-card card-appointment">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Clienti</div>
+                        <div class="stat-value">@NumClienti</div>
+                    </div>
+                </div>
+
+                <div class="stat-card card-repair">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-tools"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Veicoli in Officina</div>
+                        <div class="stat-value">@NumVeicoliInOfficina</div>
+                    </div>
+                </div>
+
+                <div class="stat-card card-vehicle">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Appuntamenti Oggi</div>
+                        <div class="stat-value">@NumAppuntamentiOggi</div>
+                    </div>
+                </div>
+
+                <div class="stat-card card-quote">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Fatturato Mensile</div>
+                        <div class="stat-value">@FatturatoMensile.ToString("C")</div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="admin-panels">
+                <div class="orders-panel">
+                    <div class="panel-header">
+                        <h5>Ordini di lavoro mensili</h5>
+                    </div>
+                    <canvas id="ordiniMensiliChart"></canvas>
+                </div>
+                <div class="activities-panel">
+                    <div class="panel-header">
+                        <h5>Attività recenti</h5>
+                    </div>
+                    <ul class="activities-list">
+                        @foreach (var act in Activities)
+                        {
+                            <li class="activity-item">
+                                <i class="fa-solid @act.Icon activity-icon @act.IconColor"></i>
+                                <div class="activity-text">
+                                    <div class="activity-title">@act.Title</div>
+                                    <div class="activity-details">@act.Details • @act.RelativeTime</div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <section class="admin-upcoming-appointments">
+                <h5 class="admin-upcoming-header">Prossimi appuntamenti</h5>
+                @if (UpcomingAppointments.Any())
+                {
+                    <ul class="admin-appointment-list">
+                        @foreach (var a in UpcomingAppointments)
+                        {
+                            <li class="admin-appointment-item">
+                                <i class="fa-solid fa-car-side admin-appointment-icon"></i>
+                                <div class="admin-appointment-info">
+                                    <div class="admin-appointment-title">
+                                        @a.Servizio.Nome – @a.Veicolo.Marca @a.Veicolo.Modello – Targa: @a.Veicolo.Targa
+
+                                    </div>
+                                    <div class="admin-appointment-details">
+                                        @a.Inizio.ToString("dd/MM/yyyy, HH:mm") – Cliente: @a.Utente.Username
+
+                                    </div>
+                                    <div class="admin-appointment-details">
+                                        Meccanico: @(a.Meccanico is not null ? a.Meccanico.Username : "NESSUN MECCANICO ASSEGNATO")
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="admin-appointment-none">Nessun appuntamento futuro.</div>
+                }
+            </section>
+
+        </main>
+    </div>
+
+    <footer class="footer">
+        <div class="container footer-main">
+            <div class="footer-col footer-logo">
+                <div class="footer-logo-brand">
+                    <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                    <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+                </div>
+                <p class="footer-piva">P.IVA: 01234567890</p>
+            </div>
+
+            <div class="footer-col footer-contact">
+                <h4>Sede e Contatti</h4>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+            </div>
+
+            <div class="footer-col footer-hours">
+                <h4>Orari di Apertura</h4>
+                <p>
+                    LUN – VEN<br />
+                    8:00 – 12:30<br />
+                    14:30 – 18:00
+                </p>
+            </div>
+
+            <div class="footer-col footer-social">
+                <h4>Seguici</h4>
+                <div class="social-icons">
+                    <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div class="footer-legal">
+        <div class="container">
+            <p>
+                <a href="/privacy">Privacy Policy</a> |
+                <a href="/cookie">Cookie Policy</a> |
+            </p>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private string? userId;
+    private string UserName = string.Empty;
+    private string ProfileImageUrl = "/images/default-profile.png";
+
+    private int NumClienti { get; set; }
+    private int NumVeicoliInOfficina { get; set; }
+    private int NumAppuntamentiOggi { get; set; }
+    private decimal FatturatoMensile { get; set; }
+
+    private bool _needChartUpdate;
+    private List<Appuntamento> UpcomingAppointments { get; set; } = new();
+
+    private string[] months = new[] { "Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic" };
+    private int[] orderCounts = new int[12];
+
+    private class RecentActivity
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Details { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+        public string Icon { get; set; } = string.Empty;
+        public string IconColor { get; set; } = string.Empty;
+
+        public string RelativeTime
+        {
+            get
+            {
+                var span = DateTime.Now - Timestamp;
+                if (span.TotalMinutes < 1) return "Pochi secondi fa";
+                if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} minuti fa";
+                if (span.TotalHours < 24) return $"{(int)span.TotalHours} ore fa";
+                return $"{(int)span.TotalDays} giorni fa";
+            }
+        }
+    }
+
+    private List<RecentActivity> Activities { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        UserName = user.Identity?.Name ?? "Amministratore";
+
+        if (int.TryParse(userId, out var id))
+        {
+            var fullUser = await UserService.FindByIdAsync(id);
+            if (fullUser is not null)
+            {
+                ProfileImageUrl = $"/api/user/{fullUser.Id}/profile-image";
+            }
+        }
+
+        await CaricaStatisticheAsync();
+        await CaricaOrdiniMensiliAsync();
+        await CaricaAttivitaRecentiAsync();
+
+        UpcomingAppointments = await DbContext.Appuntamenti
+                .Include(a => a.Veicolo)
+                .Include(a => a.Utente)
+                .Include(a => a.Servizio)
+                .Include(a => a.Meccanico)
+                .Where(a => a.Inizio > DateTime.Now)
+                .OrderBy(a => a.Inizio)
+                .ToListAsync();
+    }
+
+
+    private async Task CaricaStatisticheAsync()
+    {
+        var today = DateTime.Today;
+
+        NumClienti = await DbContext.Users
+            .CountAsync(u => u.Role == "Customer");
+
+        NumVeicoliInOfficina = await DbContext.Riparazioni
+            .Where(r => !r.IsCompleted)
+            .Select(r => r.VeicoloId)
+            .Distinct()
+            .CountAsync();
+
+        NumAppuntamentiOggi = await DbContext.Appuntamenti
+            .CountAsync(a => a.Inizio.Date == today);
+
+        var primoGiornoMese = new DateTime(today.Year, today.Month, 1);
+        var primoGiornoMeseSuccessivo = primoGiornoMese.AddMonths(1);
+
+        FatturatoMensile = await DbContext.Appuntamenti
+            .Where(a =>
+                a.Inizio >= primoGiornoMese &&
+                a.Inizio < primoGiornoMeseSuccessivo
+            )
+            .SumAsync(a => (decimal?)a.CostoStimato)
+            ?? 0m;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_needChartUpdate)
+        {
+            await JSRuntime.InvokeVoidAsync("renderOrdiniChart", months, orderCounts);
+            _needChartUpdate = false;
+        }
+    }
+
+    private async Task CaricaOrdiniMensiliAsync()
+    {
+        var year = DateTime.Today.Year;
+        for (int m = 1; m <= 12; m++)
+        {
+            orderCounts[m - 1] = await DbContext.Appuntamenti
+                .CountAsync(a =>
+                    a.Inizio.Year == year &&
+                    a.Inizio.Month == m
+                );
+        }
+        _needChartUpdate = true;
+    }
+
+    private async Task CaricaAttivitaRecentiAsync()
+    {
+        var users = await DbContext.Users
+            .OrderByDescending(u => u.RegisteredAt)
+            .Take(5)
+            .Select(u => new RecentActivity
+                {
+                    Title = "Nuovo utente registrato",
+                    Details = u.Username,
+                    Timestamp = u.RegisteredAt,
+                    Icon = "fa-user-plus",
+                    IconColor = "primary"
+                })
+            .ToListAsync();
+
+        var appointments = await DbContext.Appuntamenti
+            .OrderByDescending(a => a.Inizio)
+            .Take(5)
+            .Select(a => new RecentActivity
+                {
+                    Title = "Nuovo appuntamento",
+                    Details = a.Utente.Username + " • " + a.Inizio.ToString("t"),
+                    Timestamp = a.Inizio,
+                    Icon = "fa-calendar-plus",
+                    IconColor = "warning"
+                })
+            .ToListAsync();
+
+        var preventivi = await DbContext.Preventivi
+             .OrderByDescending(p => p.DataCreazione)
+            .Take(5)
+             .Select(p => new RecentActivity
+                 {
+                     Title = "Nuovo preventivo creato",
+                     Details = p.Utente.Username + " • €" + p.Totale,
+                     Timestamp = p.DataCreazione,
+                     Icon = "fa-file-invoice-dollar",
+                     IconColor = "danger"
+                 })
+             .ToListAsync();
+
+        var riparazioni = await DbContext.Riparazioni
+            .Where(r => r.IsCompleted)
+            .OrderByDescending(r => r.DataProntoRitiro)
+            .Take(5)
+            .Select(r => new RecentActivity
+                {
+                    Title = "Riparazione completata",
+                    Details = r.Veicolo.Marca + " " + r.Veicolo.Modello,
+                    Timestamp = r.DataProntoRitiro,
+                    Icon = "fa-tools",
+                    IconColor = "success"
+                })
+            .ToListAsync();
+
+        Activities = users
+            .Concat(appointments)
+            .Concat(preventivi)
+            .Concat(riparazioni)
+            .OrderByDescending(a => a.Timestamp)
+            .Take(5)
+            .ToList();
+    }
+
+    private async Task RicaricaStatistiche()
+    {
+        await CaricaStatisticheAsync();
+    }
+
+    private void VaiGestioneUtenti()
+    {
+        NavigationManager.NavigateTo("/admin/gestione-utenti");
+    }
+
+    private void VaiGestioneServizi()
+    {
+        NavigationManager.NavigateTo("/admin/gestione-servizi");
+    }
+
+    private void VaiGestioneRicambi()
+    {
+        NavigationManager.NavigateTo("/admin/gestione-ricambi");
+    }
+
+    private void Logout()
+    {
+        NavigationManager.NavigateTo("/logout", forceLoad: true);
+    }
+
+    
+}

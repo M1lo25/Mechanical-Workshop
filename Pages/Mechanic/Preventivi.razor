@@ -1,0 +1,409 @@
+﻿@page "/mechanic/preventivi"
+@attribute [Authorize(Roles = "Mechanic,Admin")]
+@using BlazorOfficina.Data.Models
+@using System.Security.Claims
+
+@inject AuthenticationStateProvider AuthState
+@inject IQuoteService QuoteService
+@inject IAppointmentService AppointmentService
+@inject IRepairService RepairService
+@inject IVeicoloService VeicoloService
+
+<!-- NAVBAR -->
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <nav class="nav-links">
+                    <a href="/admin">Dashboard</a>
+                    <a href="/mechanic/appointments">Appuntamenti</a>
+                    <a href="/mechanic/preventivi" class="active">Preventivi</a>
+                    <a href="/mechanic/vehicles">Veicoli</a>
+                    <a href="/admin/gestioneUtenti">Gestione Utenti</a>
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Mechanic">
+            <Authorized>
+                <nav class="nav-links">
+                    <a href="/mechanic">Dashboard</a>
+                    <a href="/mechanic/appointments">Appuntamenti</a>
+                    <a href="/mechanic/preventivi" class="active">Preventivi</a>
+                    <a href="/mechanic/customers">Clienti</a>
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+
+        <div class="iconeCliente">
+            <a class="icona"><i class="fas fa-bell"></i></a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<!-- StatCards -->
+<AuthorizeView Roles="Mechanic">
+    <Authorized>
+        <section class="stats-cards-mechanic">
+            <div class="stat-card-mechanic card-appointment">
+                <div class="stat-icon-mechanic"><i class="fas fa-calendar-day"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Appuntamenti oggi</div>
+                    <div class="stat-value-mechanic">@TodayAppointmentsCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-repair">
+                <div class="stat-icon-mechanic"><i class="fas fa-tools"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Riparazioni in corso</div>
+                    <div class="stat-value-mechanic">@OngoingRepairsCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-vehicle">
+                <div class="stat-icon-mechanic"><i class="fas fa-car-side"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Veicoli in attesa</div>
+                    <div class="stat-value-mechanic">@PendingVehiclesCount</div>
+                </div>
+            </div>
+            <div class="stat-card-mechanic card-quote">
+                <div class="stat-icon-mechanic"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div class="stat-info-mechanic">
+                    <div class="stat-label-mechanic">Preventivi da confermare</div>
+                    <div class="stat-value-mechanic">@PendingQuotesCount</div>
+                </div>
+            </div>
+        </section>
+    </Authorized>
+</AuthorizeView>
+
+<!-- TOOLBAR -->
+<div class="mech-page-header">
+    <p class="mech-page-title">Conferma o respingi un preventivo</p>
+    <div class="mech-toolbar">
+        <div class="mech-search-bar">
+            <i class="fas fa-magnifying-glass mech-search-icon"></i>
+            <input type="text"
+                   placeholder="Cerca preventivo (cliente, veicolo, stato…)"
+                   @bind="searchText"
+                   class="mech-search-input" />
+        </div>
+        <select @bind="filterStatus" class="mech-status-select">
+            <option value="">Tutti gli stati</option>
+            <option value="Pending">In attesa</option>
+            <option value="Confirmed">Approvato</option>
+            <option value="Rejected">Rifiutato</option>
+        </select>
+        <button class="mech-filter-btn" @onclick="ApplyFilter">
+            <i class="fas fa-filter mech-filter-icon"></i> Filtra
+        </button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p class="mech-loading">Caricamento…</p>
+}
+else
+{
+    @* — SEZIONE “PREVENTIVI DA CONFERMARE” — *@
+    @if (pagedQuotes.Any())
+    {
+        <h3 class="mech-page-title">Preventivi da confermare</h3>
+        <div class="mech-quotes-list">
+            <div class="mech-quotes-header">
+                <div class="mech-col-cliente">Cliente</div>
+                <div class="mech-col-veicolo">Veicolo</div>
+                <div class="mech-col-servizio">Servizio</div>
+                <div class="mech-col-importo">Importo</div>
+                <div class="mech-col-stato">Stato</div>
+                <div class="mech-col-data">Data</div>
+                <div class="mech-col-azioni">Azioni</div>
+            </div>
+
+            @foreach (var q in pagedQuotes)
+            {
+                <div class="mech-quote-row">
+                    <div class="mech-cliente-cell">
+                        <i class="fas fa-user mech-icon-user"></i>
+                        <div class="mech-cliente-info">
+                            <div class="mech-cliente-nome">@q.Utente?.Username</div>
+                            <div class="mech-cliente-id">#PREV-@q.Id.ToString("D3")</div>
+                        </div>
+                    </div>
+                    <div class="mech-veicolo-cell">
+                        <div class="mech-veicolo-modello">@q.Veicolo?.Modello</div>
+                        <div class="mech-veicolo-targa">@q.Veicolo?.Targa</div>
+                    </div>
+                    <div class="mech-servizio-cell">
+                        <span class="mech-badge-servizio">@q.Servizio?.Nome</span>
+                    </div>
+                    <div class="mech-importo-cell">€ @q.Totale.ToString("N2")</div>
+                    <div class="mech-stato-cell">
+                        @if (q.Status == PreventivoStatus.Pending)
+                        {
+                            <span class="mech-badge-pending">In attesa</span>
+                        }
+                        else if (q.Status == PreventivoStatus.Confirmed)
+                        {
+                            <span class="mech-badge-confirmed">Approvato</span>
+                        }
+                        else
+                        {
+                            <span class="mech-badge-rejected">Rifiutato</span>
+                        }
+                    </div>
+                    <div class="mech-data-cell">@q.DataCreazione.ToString("dd/MM/yyyy")</div>
+                    <div class="mech-azioni-cell">
+                        <button class="mech-btn-view" title="Visualizza">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="mech-btn-confirm"
+                                title="Conferma"
+                                @onclick="() => UpdateStatus(q.Id, PreventivoStatus.Confirmed)">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="mech-btn-reject"
+                                title="Respingi"
+                                @onclick="() => UpdateStatus(q.Id, PreventivoStatus.Rejected)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <nav class="mech-pagination">
+            <button class="mech-page-btn" @onclick="PrevPage" disabled="@(currentPage == 1)">‹</button>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <button class="mech-page-number @(currentPage == i ? "active" : "")"
+                        @onclick="() => GoToPage(i)">
+                    @i
+                </button>
+            }
+            <button class="mech-page-btn" @onclick="NextPage" disabled="@(currentPage == totalPages)">›</button>
+        </nav>
+    }
+    else
+    {
+        <p class="mech-no-data">Nessun preventivo da confermare.</p>
+    }
+    <h3 class="mech-page-title" style="margin-top:2rem">Preventivi gestiti</h3>
+    <div class="mech-quotes-list">
+        <div class="mech-quotes-header">
+            <div class="mech-col-cliente">Cliente</div>
+            <div class="mech-col-veicolo">Veicolo</div>
+            <div class="mech-col-servizio">Servizio</div>
+            <div class="mech-col-importo">Importo</div>
+            <div class="mech-col-stato">Stato</div>
+            <div class="mech-col-data">Data</div>
+            <div class="mech-col-azioni">Azioni</div>
+        </div>
+
+        @foreach (var q in handledQuotes)
+        {
+            <div class="mech-quote-row">
+                <div class="mech-cliente-cell">
+                    <i class="fas fa-user mech-icon-user"></i>
+                    <div class="mech-cliente-info">
+                        <div class="mech-cliente-nome">@q.Utente?.Username</div>
+                        <div class="mech-cliente-id">#PREV-@q.Id.ToString("D3")</div>
+                    </div>
+                </div>
+                <div class="mech-veicolo-cell">
+                    <div class="mech-veicolo-modello">@q.Veicolo?.Modello</div>
+                    <div class="mech-veicolo-targa">@q.Veicolo?.Targa</div>
+                </div>
+                <div class="mech-servizio-cell">
+                    <span class="mech-badge-servizio">@q.Servizio?.Nome</span>
+                </div>
+                <div class="mech-importo-cell">€ @q.Totale.ToString("N2")</div>
+                <div class="mech-stato-cell">
+                    @if (q.Status == PreventivoStatus.Confirmed)
+                    {
+                        <span class="mech-badge-confirmed">Approvato</span>
+                    }
+                    else
+                    {
+                        <span class="mech-badge-rejected">Rifiutato</span>
+                    }
+                </div>
+                <div class="mech-data-cell">@q.DataCreazione.ToString("dd/MM/yyyy")</div>
+                <div class="mech-azioni-cell">
+                    <button class="mech-btn-view" title="Visualizza">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<footer class="footer">
+        <div class="container footer-main">
+            <div class="footer-col footer-logo">
+                <div class="footer-logo-brand">
+                    <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                    <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+                </div>
+                <p class="footer-piva">P.IVA: 01234567890</p>
+            </div>
+
+            <div class="footer-col footer-contact">
+                <h4>Sede e Contatti</h4>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+            </div>
+
+            <div class="footer-col footer-hours">
+                <h4>Orari di Apertura</h4>
+                <p>
+                    LUN – VEN<br />
+                    8:00 – 12:30<br />
+                    14:30 – 18:00
+                </p>
+            </div>
+
+            <div class="footer-col footer-social">
+                <h4>Seguici</h4>
+                <div class="social-icons">
+                    <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div class="footer-legal">
+        <div class="container">
+            <p>
+                <a href="/privacy">Privacy Policy</a> |
+                <a href="/cookie">Cookie Policy</a> |
+            </p>
+        </div>
+    </div>
+
+@code {
+    private int TodayAppointmentsCount;
+    private int OngoingRepairsCount;
+    private int PendingVehiclesCount;
+    private int PendingQuotesCount;
+    private string? userId;
+
+    private List<Preventivo> allQuotes = new();
+    private List<Preventivo> pagedQuotes = new();
+    private bool isLoading = true;
+    private string searchText = "";
+    private string filterStatus = "";
+    private int currentPage = 1;
+    private int pageSize = 5;
+    private int totalPages => (int)Math.Ceiling(allQuotes.Count / (double)pageSize);
+
+    private List<Preventivo> handledQuotes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId == null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        TodayAppointmentsCount = await AppointmentService.GetTodaysCountForMechanicAsync(userId);
+        OngoingRepairsCount = await AppointmentService.GetCurrentAppointmentsCountForMechanicAsync(userId);
+        PendingVehiclesCount = await VeicoloService.GetPendingVehiclesCountForMechanicAsync(userId);
+        PendingQuotesCount = await QuoteService.GetPendingQuotesCountForMechanicAsync(userId);
+
+        allQuotes = (await QuoteService.GetOpenPreventiviAsync()).ToList();
+        ApplyFilter();
+
+        var user = auth.User;
+        if (user.IsInRole("Admin"))
+        {
+            var confirmedAll = await QuoteService.GetPreventiviByStatusAsync(PreventivoStatus.Confirmed);
+            var rejectedAll = await QuoteService.GetPreventiviByStatusAsync(PreventivoStatus.Rejected);
+
+            handledQuotes = confirmedAll
+                               .Concat(rejectedAll)
+                               .OrderByDescending(q => q.DataCreazione)
+                               .ToList();
+        }
+        else
+        {
+            var mechId = int.Parse(userId!);
+            var confirmed = await QuoteService.GetPreventiviByMeccanicoAsync(mechId, PreventivoStatus.Confirmed);
+            var rejected = await QuoteService.GetPreventiviByMeccanicoAsync(mechId, PreventivoStatus.Rejected);
+
+            handledQuotes = confirmed
+                               .Concat(rejected)
+                               .OrderByDescending(q => q.DataCreazione)
+                               .ToList();
+        }
+
+        isLoading = false;
+    }
+
+    private void ApplyFilter()
+    {
+        var filtered = allQuotes.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            var t = searchText.Trim().ToLower();
+            filtered = filtered.Where(q =>
+                (q.Utente?.Username?.ToLower().Contains(t) ?? false) ||
+                (q.Veicolo?.Modello?.ToLower().Contains(t) ?? false) ||
+                q.Status.ToString().ToLower().Contains(t));
+        }
+        if (!string.IsNullOrEmpty(filterStatus))
+        {
+            var s = Enum.Parse<PreventivoStatus>(filterStatus);
+            filtered = filtered.Where(q => q.Status == s);
+        }
+
+        allQuotes = filtered.ToList();
+        GoToPage(1);
+    }
+
+    private void GoToPage(int page)
+    {
+        currentPage = page;
+        pagedQuotes = allQuotes
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+    }
+    private void PrevPage() => GoToPage(currentPage - 1);
+    private void NextPage() => GoToPage(currentPage + 1);
+
+    private async Task UpdateStatus(int id, PreventivoStatus newStatus)
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var mechId = int.Parse(auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        await QuoteService.UpdatePreventivoStatusAsync(id, mechId, newStatus);
+
+        allQuotes = (await QuoteService.GetOpenPreventiviAsync()).ToList();
+        PendingQuotesCount = await QuoteService.GetPendingQuotesCountForMechanicAsync(userId!);
+        ApplyFilter();
+    }
+}

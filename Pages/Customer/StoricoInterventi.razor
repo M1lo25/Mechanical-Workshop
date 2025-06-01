@@ -1,0 +1,340 @@
+﻿@page "/customer/storico-interventi"
+@attribute [Authorize(Roles = "Customer,Mechanic")]
+
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@using BlazorOfficina.Data.Models
+@using BlazorOfficina.Data
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/customer">Dashboard</a>
+            <a href="/prenota-appuntamento">Appuntamento</a>
+            <a href="/customer/vehicles">Veicoli</a>
+            <a href="/customer/preventivi">Preventivi</a>
+        </nav>
+        <div class="iconeCliente">
+            <a class="icona"><i class="fas fa-bell"></i></a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<div class="storico-interventi-page">
+
+    <section class="filters">
+        <div class="filter--search">
+            <input type="text"
+                   class="filter-input"
+                   @bind="searchTerm"
+                   placeholder="Cerca per veicolo, tipo intervento…" />
+        </div>
+        <div class="filter--vehicle">
+            <select class="filter-select" @bind="selectedVehicleId">
+                <option value="">Tutti i veicoli</option>
+                @foreach (var v in Vehicles)
+                {
+                    <option value="@v.Id">@v.Marca @v.Modello (@v.Targa)</option>
+                }
+            </select>
+        </div>
+        <div class="filter--date">
+            <input type="date" class="filter-input" @bind="selectedDay" />
+        </div>
+        <div class="filter--action">
+            <button class="filter-button" @onclick="ApplyFilters">OK</button>
+        </div>
+    </section>
+
+    <section class="interventi-list">
+        <header class="interventi-list__header">
+            <h2>Interventi Effettuati</h2>
+            <span class="interventi-list__count">Totale: @TotalItems</span>
+        </header>
+
+        @if (Interventions is null)
+        {
+            <p>Caricamento...</p>
+        }
+        else if (!Interventions.Any())
+        {
+            <p>Nessun intervento trovato.</p>
+        }
+        else
+        {
+            @foreach (var it in PagedInterventions)
+            {
+                <article class="intervento-card">
+                    <div class="intervento-card__main">
+                        <div>
+                            <h3 class="intervento-card__title">@it.Descrizione</h3>
+                            <p class="intervento-card__info">
+                                <time datetime="@it.Data.ToString("s")">
+                                    @it.Data.ToString("dd/MM/yyyy") – Ore @it.Data.ToString("HH:mm")
+                                </time><br />
+                                Veicolo: @it.Veicolo.Modello (@it.Veicolo.Targa)<br />
+                                Spesa: €@it.Costo
+                            </p>
+                        </div>
+                        <div class="intervento-card__actions">
+                            <span class="badge-completed">Completato</span>
+                            <button class="toggle-details" @onclick="() => ToggleDetails(it)">
+                                <i class="icon-chevron @(it.ShowDetails ? "up" : "down")"></i>
+                            </button>
+                        </div>
+                    </div>
+                    @if (it.ShowDetails)
+                    {
+                        <div class="intervento-card__details">
+                            <p><strong>Km al ritiro:</strong> @it.Chilometraggio</p>
+                            <p><strong>Note:</strong> @it.Note</p>
+                        </div>
+                    }
+                </article>
+            }
+
+            <nav class="pagination">
+                <button class="page-btn" disabled="@(CurrentPage == 1)"
+                        @onclick="() => ChangePage(CurrentPage - 1)">
+                    «
+                </button>
+                @for (int p = 1; p <= TotalPages; p++)
+                {
+                    <button class="page-btn @(p == CurrentPage ? "active" : "")"
+                            @onclick="() => ChangePage(p)">
+                        @p
+                    </button>
+                }
+                <button class="page-btn" disabled="@(CurrentPage == TotalPages)"
+                        @onclick="() => ChangePage(CurrentPage + 1)">
+                    »
+                </button>
+            </nav>
+        }
+    </section>
+
+    <section class="vehicles-section">
+        <header class="vehicles-section__header">
+            <h2>I Miei Veicoli</h2>
+        </header>
+        <div class="vehicles-list">
+            @foreach (var v in Vehicles)
+            {
+                <article class="vehicle-card">
+                    <h3 class="vehicle-card__title">@v.Marca @v.Modello</h3>
+                    <ul class="vehicle-card__info">
+                        <li>Targa: @v.Targa</li>
+                        <li>Anno: @v.Anno</li>
+                        <li>Km: @v.Chilometraggio</li>
+                        <li>Ultimo intervento: @(v.UltimoIntervento?.ToString("dd/MM/yyyy") ?? "-")</li>
+                        <li>Prossimo intervento: @(v.DataPrevisto?.ToString("dd/MM/yyyy") ?? "-")</li>
+                    </ul>
+                </article>
+            }
+        </div>
+    </section>
+</div>
+
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br />Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+@code {
+    private string searchTerm = string.Empty;
+    private int? selectedVehicleId = null;
+    private DateTime? selectedDay = null;
+
+    private List<RiparazioneView> Interventions = new();
+    private List<VeicoloView> Vehicles = new();
+
+    private int PageSize { get; } = 4;
+    private int CurrentPage { get; set; } = 1;
+    private int TotalItems => Interventions.Count;
+    private int TotalPages => (int)Math.Ceiling(TotalItems / (double)PageSize);
+    private IEnumerable<RiparazioneView> PagedInterventions =>
+      Interventions.Skip((CurrentPage - 1) * PageSize).Take(PageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = int.Parse(auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        var vehiclesRaw = await DbContext.Veicoli
+          .Where(v => v.UtenteId == userId)
+          .Select(v => new
+          {
+              v.Id,
+              v.Marca,
+              v.Modello,
+              v.Targa,
+              v.Anno,
+              Chilometraggio = v.Chilometraggio,
+              UltimoIntervento = DbContext.Riparazioni
+              .Where(r => r.VeicoloId == v.Id && r.DataProntoRitiro <= DateTime.Now)
+              .Max(r => (DateTime?)r.DataProntoRitiro)
+          })
+          .ToListAsync();
+
+        Vehicles = vehiclesRaw
+          .Select(v => new VeicoloView
+              {
+                  Id = v.Id,
+                  Marca = v.Marca,
+                  Modello = v.Modello,
+                  Targa = v.Targa,
+                  Anno = v.Anno,
+                  Chilometraggio = v.Chilometraggio,
+                  UltimoIntervento = v.UltimoIntervento,
+                  DataPrevisto = v.UltimoIntervento.HasValue
+                  ? v.UltimoIntervento.Value.AddMonths(6)
+                  : (DateTime?)null
+              })
+          .ToList();
+
+        await LoadInterventionsAsync();
+    }
+
+    private async Task LoadInterventionsAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = int.Parse(auth.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        var now = DateTime.UtcNow;
+
+        var q = DbContext.Appuntamenti
+            .Include(a => a.Veicolo)
+            .Where(a =>
+                a.UtenteId == userId &&
+                a.Fine < now
+            );
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            q = q.Where(a =>
+                a.Veicolo.Modello.ToLower().Contains(term) ||
+                a.Veicolo.Targa.ToLower().Contains(term)
+            );
+        }
+
+        if (selectedVehicleId.HasValue)
+        {
+            q = q.Where(a => a.VeicoloId == selectedVehicleId.Value);
+        }
+
+        if (selectedDay.HasValue)
+        {
+            var day = selectedDay.Value.Date;
+            q = q.Where(a => a.Inizio.Date == day);
+        }
+
+        Interventions = await q
+            .OrderByDescending(a => a.Fine)
+            .Select(a => new RiparazioneView
+                {
+                    Id = a.Id,
+                    Descrizione = $"Appuntamento su {a.Veicolo.Modello}",
+                    Data = a.Fine,
+                    Costo = a.CostoStimato,
+                    Chilometraggio = 0,
+                    Note = string.Empty,
+                    Veicolo = new VeicoloMin
+                    {
+                        Modello = a.Veicolo.Modello,
+                        Targa = a.Veicolo.Targa
+                    }
+                })
+            .ToListAsync();
+
+        CurrentPage = 1;
+    }
+
+    private Task ApplyFilters() => LoadInterventionsAsync();
+
+    private void ChangePage(int p)
+    {
+        if (p < 1 || p > TotalPages) return;
+        CurrentPage = p;
+    }
+
+    private void ToggleDetails(RiparazioneView it) => it.ShowDetails = !it.ShowDetails;
+
+    private class VeicoloMin
+    {
+        public string Modello { get; set; } = string.Empty;
+        public string Targa { get; set; } = string.Empty;
+    }
+
+    private class RiparazioneView
+    {
+        public int Id { get; set; }
+        public string Descrizione { get; set; } = string.Empty;
+        public DateTime Data { get; set; }
+        public decimal Costo { get; set; }
+        public int Chilometraggio { get; set; }
+        public string Note { get; set; } = string.Empty;
+        public VeicoloMin Veicolo { get; set; } = new VeicoloMin();
+        public bool ShowDetails { get; set; }
+    }
+
+    private class VeicoloView
+    {
+        public int Id { get; set; }
+        public string Marca { get; set; } = string.Empty;
+        public string Modello { get; set; } = string.Empty;
+        public string Targa { get; set; } = string.Empty;
+        public int Anno { get; set; }
+        public int Chilometraggio { get; set; }
+        public DateTime? UltimoIntervento { get; set; }
+        public DateTime? DataPrevisto { get; set; }
+    }
+}

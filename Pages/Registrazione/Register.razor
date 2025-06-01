@@ -1,0 +1,139 @@
+﻿@page "/register"
+@attribute [AllowAnonymous]
+
+@using System.Net
+@using System.Net.Http.Json
+@using System.Text.RegularExpressions
+@using BlazorOfficina.Shared
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<HeadContent>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121212;
+        }
+    </style>
+</HeadContent>
+
+<a href="/login" class="back-button" title="Torna al Login">
+    <i class="fas fa-arrow-left"></i>
+</a>
+
+<div class="login-container">
+    <div class="login-card">
+
+        <div class="login-brand">
+            <img src="/Images/Logging/LogoHome.png"
+                 alt="Officina Meccanica Milani"
+                 class="login-logo" />
+            <span class="brand-title">
+                Officina<br />Meccanica<br />Milani
+            </span>
+        </div>
+
+        <h2>REGISTRATI</h2>
+
+        @if (!string.IsNullOrEmpty(passwordError))
+        {
+            <div class="error-box">@passwordError</div>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="error-box">@errorMessage</div>
+        }
+
+        <EditForm Model="registerModel"
+                  OnValidSubmit="HandleRegister"
+                  class="login-form">
+            <DataAnnotationsValidator />
+
+            <InputText @bind-Value="registerModel.Username"
+                       placeholder="Username"
+                       class="input-field" />
+            <ValidationMessage For="@(() => registerModel.Username)"
+                               class="error-box" />
+
+            <InputText @bind-Value="registerModel.Email"
+                       type="email"
+                       placeholder="Email"
+                       class="input-field" />
+            <ValidationMessage For="@(() => registerModel.Email)"
+                               class="error-box" />
+
+            <InputText @bind-Value="registerModel.Password"
+                       type="password"
+                       placeholder="Password"
+                       class="input-field" />
+            <ValidationMessage For="@(() => registerModel.Password)"
+                               class="error-box" />
+
+            <button type="submit" class="btn-login">
+                Registrati
+            </button>
+        </EditForm>
+
+        <p class="register-prompt">
+            Hai già un account?
+            <a href="login" class="register-link">Accedi</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private RegisterDto registerModel = new()
+        {
+            Role = "Customer"    
+        };
+
+    private string? errorMessage;
+    private string? passwordError;
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? returnUrl { get; set; }
+
+    private static bool ValidatePassword(string pwd)
+    {
+        var pattern = @"^(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$";
+        return Regex.IsMatch(pwd, pattern);
+    }
+
+    private async Task HandleRegister()
+    {
+        passwordError = null;
+        errorMessage = null;
+
+        if (!ValidatePassword(registerModel.Password ?? string.Empty))
+        {
+            passwordError = "La password deve contenere almeno 8 caratteri, " +
+                            "una lettera maiuscola, un numero e un carattere speciale.";
+            return;
+        }
+
+        var response = await Http.PostAsJsonAsync("api/auth/register", registerModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var target = string.IsNullOrEmpty(returnUrl)
+                         ? "/login"
+                         : $"/login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+            Nav.NavigateTo(target, forceLoad: true);
+        }
+        else if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            var payload = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+            errorMessage = payload?.GetValueOrDefault("error")
+                           ?? "Username o Email già in uso.";
+        }
+        else
+        {
+            errorMessage = "Errore durante la registrazione. Riprova più tardi.";
+        }
+    }
+}

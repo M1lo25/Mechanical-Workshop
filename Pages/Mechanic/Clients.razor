@@ -1,0 +1,238 @@
+﻿@page "/mechanic/customers"
+@attribute [Authorize(Roles = "Mechanic")]
+@using Microsoft.EntityFrameworkCore
+@using BlazorOfficina.Data
+@using BlazorOfficina.Data.Models
+@using System.Security.Claims
+
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAppointmentService AppointmentService
+@inject IRepairService RepairService
+@inject IVeicoloService VeicoloService
+@inject IQuoteService QuoteService
+
+
+<header class="navbar">
+    <div class="container">
+        <a href="/mechanic/appointments" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text ms-2">Officina Meccanica Milani</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/mechanic">Dashboard</a>
+            <a href="/mechanic/appointments">Appuntamenti</a>
+            <a href="/mechanic/preventivi">Preventivi</a>
+            <a href="/mechanic/customers" class="active">Clienti</a>
+        </nav>
+        <div class="iconeCliente">
+            <a class="icona">
+                <i class="fas fa-bell"></i>
+            </a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<section class="stats-cards-mechanic ">
+    <div class="stat-card-mechanic card-appointment">
+        <div class="stat-icon-mechanic">
+            <i class="fa-solid fa-calendar-days"></i>
+        </div>
+        <div class="stat-info-mechanic">
+            <div class="stat-label-mechanic">Appuntamenti oggi</div>
+            <div class="stat-value-mechanic">@TodayAppointmentsCount</div>
+        </div>
+    </div>
+
+    <div class="stat-card-mechanic card-repair">
+        <div class="stat-icon-mechanic">
+            <i class="fa-solid fa-tools"></i>
+        </div>
+        <div class="stat-info-mechanic">
+            <div class="stat-label-mechanic">Riparazioni in corso</div>
+            <div class="stat-value-mechanic">@OngoingRepairsCount</div>
+        </div>
+    </div>
+
+    <div class="stat-card-mechanic card-vehicle">
+        <div class="stat-icon-mechanic">
+            <i class="fa-solid fa-car-side"></i>
+        </div>
+        <div class="stat-info-mechanic">
+            <div class="stat-label-mechanic">Veicoli in attesa</div>
+            <div class="stat-value-mechanic">@PendingVehiclesCount</div>
+        </div>
+    </div>
+
+    <div class="stat-card-mechanic card-quote">
+        <div class="stat-icon-mechanic">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+        </div>
+        <div class="stat-info-mechanic">
+            <div class="stat-label-mechanic">Preventivi da confermare</div>
+            <div class="stat-value-mechanic">@PendingQuotesCount</div>
+        </div>
+    </div>
+</section>
+
+<div class="clients-container">
+    <!-- CLIENTI -->
+    <div class="clients-panel">
+        <div class="panel-header">
+            <i class="fas fa-users"></i>
+            <span>Clienti Registrati</span>
+        </div>
+        <input class="search-box"
+               placeholder="Cerca cliente..."
+               @bind="searchTerm"
+               @bind:event="oninput" />
+        <div class="clients-list">
+            @foreach (var client in FilteredClients)
+            {
+                <div class="client-item">
+                    <!-- Placeholder avatar -->
+                    <div class="avatar-placeholder">
+                        @client.Username.Substring(0, 1).ToUpper()
+                    </div>
+                    <div class="client-info">
+                        <div class="client-name">@client.Username</div>
+                        <div class="client-count">
+                            @_allVehicles.Count(v => v.UtenteId == client.Id) veicoli registrati
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="vehicles-panel">
+        <div class="panel-header">
+            <i class="fas fa-car"></i>
+            <span>Veicoli dei Clienti</span>
+        </div>
+        <div class="vehicles-list">
+            @foreach (var v in _allVehicles)
+            {
+                <div class="vehicle-card">
+                    <div class="vehicle-body">
+                        <div class="vehicle-title">@v.Marca @v.Modello</div>
+                        <div><strong>Targa:</strong> @v.Targa</div>
+                        <div><strong>Cliente:</strong> @v.Utente.Username</div>
+                        <div class="vehicle-date">
+                            @if (v.DataPrevisto.HasValue)
+                            {
+                                <span>Previsto: @v.DataPrevisto.Value.ToString("dd/MM/yyyy")</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="vehicle-footer">
+                        <button href="/customer/vehicles" class="btnClients btn-info">Dettagli</button>
+                        <button href="/customer/quotes" class="btnClients btn-success">Preventivo</button>
+                        <button href="/customer/storico-interventi" class="btnClients btn-secondary">Storico</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+<div class="footer-legal">
+    <div class="container">
+        <p>
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/cookie">Cookie Policy</a> |
+        </p>
+    </div>
+</div>
+
+@code {
+    private int TodayAppointmentsCount;
+    private int OngoingRepairsCount;
+    private int PendingVehiclesCount;
+    private int PendingQuotesCount;
+    private string? userId;
+
+    private List<User> _allClients = new();
+    private List<Veicolo> _allVehicles = new();
+    private string searchTerm = "";
+
+    private IEnumerable<User> FilteredClients =>
+      string.IsNullOrWhiteSpace(searchTerm)
+        ? _allClients
+        : _allClients.Where(u =>
+            u.Username.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            TodayAppointmentsCount = await AppointmentService
+                .GetTodaysCountForMechanicAsync(userId);
+            OngoingRepairsCount = await AppointmentService.GetCurrentAppointmentsCountForMechanicAsync(userId);
+            PendingVehiclesCount = await VeicoloService
+                .GetPendingVehiclesCountForMechanicAsync(userId);
+            PendingQuotesCount = await QuoteService
+                .GetPendingQuotesCountForMechanicAsync(userId);
+        }
+
+        _allClients = await DbContext.Users
+            .Where(u => u.Role == "Customer")
+            .ToListAsync();
+
+        _allVehicles = await DbContext.Veicoli
+          .Include(v => v.Utente)
+          .ToListAsync();
+    }
+}

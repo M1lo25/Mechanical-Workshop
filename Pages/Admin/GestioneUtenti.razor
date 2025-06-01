@@ -1,0 +1,257 @@
+﻿@page "/admin/gestioneUtenti"
+@attribute [Authorize(Roles = "Admin")]
+
+@using System.Security.Claims
+@using BlazorOfficina.Data.Models
+@using BlazorOfficina.Data
+@using BlazorOfficina.Data.Dtos
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+
+@inject IUserService UserService
+@inject ApplicationDbContext DbContext
+@inject IJSRuntime JS
+
+<header class="navbar">
+    <div class="container">
+        <a href="/" class="logo">
+            <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+            <span class="logo-text">Officina Meccanica Milani</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/admin">Dashboard</a>
+            <a href="/mechanic/appointments">Appuntamenti</a>
+            <a href="/mechanic/preventivi">Preventivi</a>
+            <a href="/mechanic/vehicles">Veicoli</a>
+            <a href="/admin/gestioneUtenti" class="active">Gestione Utenti</a>
+        </nav>              
+        <div class="iconeCliente">
+            <a class="icona"><i class="fas fa-bell"></i></a>
+            <AuthorizeView>
+                <Authorized>
+                    <form method="post" action="api/auth/logout" class="logout-icon">
+                        <input type="hidden" name="returnUrl" value="/" />
+                        <button type="submit" class="icona" title="Esci">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</header>
+
+<!-- ─── Form Aggiungi Nuovo Utente ─── -->
+<div class="au-card au-card--form mb-5">
+    <div class="au-card-body au-card-body--flex">
+        <div class="au-form-group au-form-group--fill">
+            <label class="au-form-label">Username</label>
+            <input class="au-form-input" @bind="newUser.Username" />
+        </div>
+        <div class="au-form-group au-form-group--fill">
+            <label class="au-form-label">Email</label>
+            <input type="email" class="au-form-input" @bind="newUser.Email" />
+        </div>
+        <div class="au-form-group au-form-group--fill">
+            <label class="au-form-label">Password</label>
+            <input type="password" class="au-form-input" @bind="newUser.Password" />
+        </div>
+        <div class="au-form-group au-form-group--small">
+            <label class="au-form-label">Ruolo</label>
+            <select class="au-form-select" @bind="newUser.Role">
+                <option value="Customer">Cliente</option>
+                <option value="Mechanic">Meccanico</option>
+                <option value="Admin">Admin</option>
+            </select>
+        </div>
+        <button class="au-btn au-btn--primary au-btn--add" @onclick="AddUser">
+            <i class="fas fa-user-plus"></i> Aggiungi Utente
+        </button>
+    </div>
+</div>
+
+<!-- ─── Tabella Utenti Registrati ─── -->
+<div class="au-card au-card--table">
+    <div class="au-card-header au-card-header--table">
+        <span class="au-card-title"><i class="fas fa-list"></i> Utenti Registrati</span>
+        <input class="au-table-search" placeholder="Cerca utente…" @bind="searchTerm" />
+    </div>
+    <div class="au-card-body au-card-body--table p-0">
+        <table class="au-table">
+            <thead class="au-table-head">
+                <tr>
+                    <th class="au-th au-th--id">ID</th>
+                    <th class="au-th au-th--username">USERNAME</th>
+                    <th class="au-th au-th--email">EMAIL</th>
+                    <th class="au-th au-th--role">RUOLO</th>
+                    <th class="au-th au-th--date">DATA REGISTRAZIONE</th>
+                    <th class="au-th au-th--actions">AZIONI</th>
+                </tr>
+            </thead>
+            <tbody class="au-table-body">
+                @foreach (var u in PagedUsers)
+                {
+                    <tr class="au-tr">
+                        <td class="au-td au-td--id">@u.Id</td>
+                        <td class="au-td au-td--username">@u.Username</td>
+                        <td class="au-td au-td--email">@u.Email</td>
+                        <td class="au-td au-td--role">@u.Role</td>
+                        <td class="au-td au-td--date">
+                            @u.RegisteredAt.ToLocalTime().ToString("dd/MM/yyyy")
+                        </td>
+                        <td class="au-td au-td--actions">
+                            <button class="au-btn au-btn--danger au-btn--sm"
+                                    @onclick="() => DeleteUser(u.Id)" title="Elimina">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="au-card-footer au-card-footer--table">
+        <div class="au-pagination-info">
+            Mostrati
+            @((currentPage - 1) * pageSize + 1)–@((currentPage - 1) * pageSize + PagedUsers.Count())
+            di @filteredUsers.Count() utenti
+        </div>
+        <nav class="au-pagination">
+            <ul class="au-pagination-list">
+                <li class="au-page-item @(currentPage == 1 ? "au-page-item--disabled" : "")">
+                    <button class="au-page-link" @onclick="PrevPage">‹</button>
+                </li>
+                @for (var p = 1; p <= totalPages; p++)
+                {
+                    <li class="au-page-item @(p == currentPage ? "au-page-item--active" : "")">
+                        <button class="au-page-link" @onclick="() => GoToPage(p)">@p</button>
+                    </li>
+                }
+                <li class="au-page-item @(currentPage == totalPages ? "au-page-item--disabled" : "")">
+                    <button class="au-page-link" @onclick="NextPage">›</button>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container footer-main">
+        <div class="footer-col footer-logo">
+            <div class="footer-logo-brand">
+                <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+            </div>
+            <p class="footer-piva">P.IVA: 01234567890</p>
+        </div>
+
+        <!-- Colonna 2: sede e contatti -->
+        <div class="footer-col footer-contact">
+            <h4>Sede e Contatti</h4>
+            <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+            <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+        </div>
+
+        <!-- Colonna 3: orari di apertura -->
+        <div class="footer-col footer-hours">
+            <h4>Orari di Apertura</h4>
+            <p>
+                LUN – VEN<br />
+                8:00 – 12:30<br />
+                14:30 – 18:00
+            </p>
+        </div>
+
+        <!-- Colonna 4: social + WhatsApp -->
+        <div class="footer-col footer-social">
+            <h4>Seguici</h4>
+            <div class="social-icons">
+                <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- Riga note legali -->
+<div class="footer-legal">
+    <div class="container">
+        <p>
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/cookie">Cookie Policy</a> |
+        </p>
+    </div>
+</div>
+
+@code {
+    private RegisterDto newUser = new() { Role = "Mechanic" };
+    private List<User> allUsers = new();
+    private string searchTerm = "";
+
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages => (int)Math.Ceiling(filteredUsers.Count() / (double)pageSize);
+
+    private IEnumerable<User> filteredUsers => allUsers
+      .Where(u =>
+        string.IsNullOrWhiteSpace(searchTerm)
+        || u.Username.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+        || u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+        || u.Role.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+      );
+
+    private IEnumerable<User> PagedUsers => filteredUsers
+      .Skip((currentPage - 1) * pageSize)
+      .Take(pageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        allUsers = await DbContext.Users
+                     .AsNoTracking()
+                     .OrderBy(u => u.Id)
+                     .ToListAsync();
+    }
+
+    private async Task AddUser()
+    {
+        var ok = await UserService.RegisterAsync(
+                    newUser.Username,
+                    newUser.Email,
+                    newUser.Password,
+                    newUser.Role);
+
+        if (!ok)
+            return;
+
+        newUser = new RegisterDto { Role = "Mechanic" };
+        currentPage = 1;
+        await LoadUsers();
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+          "confirm", "Sei sicuro di voler eliminare questo utente?");
+        if (!confirmed) return;
+
+        var user = await DbContext.Users.FindAsync(id);
+        if (user is not null)
+        {
+            DbContext.Users.Remove(user);
+            await DbContext.SaveChangesAsync();
+            allUsers.RemoveAll(u => u.Id == id);
+            if (!PagedUsers.Any() && currentPage > 1)
+                currentPage--;
+        }
+    }
+
+    private void PrevPage() => GoToPage(currentPage - 1);
+    private void NextPage() => GoToPage(currentPage + 1);
+    private void GoToPage(int p) => currentPage = Math.Clamp(p, 1, totalPages);
+}

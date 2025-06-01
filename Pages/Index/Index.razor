@@ -1,0 +1,261 @@
+@page "/"
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+                <span class="logo-text">Officina Meccanica Milani</span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="/" class="active">Home</a>
+                <a href="/servizi">Servizi</a>
+                <a href="/chisiamo">Chi Siamo</a>
+                <a href="/contatti">Contatti</a>
+            </nav>
+
+            <div class="icone">
+                <a href="#" class="icona language-switcher" title="Seleziona lingua">
+                    <img src="/Images/Index/BandieraIt.jpg" alt="IT" class="flag-icon" />
+                    <span class="lang-code">IT</span>
+                    <i class="fas fa-chevron-down chevron-icon"></i>
+                </a>
+
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <a href="/login" class="icona" title="Accedi">
+                            <i class="fas fa-user"></i>
+                        </a>
+                    </NotAuthorized>
+                    <Authorized>
+                        <div class="auth-icons">
+                            <a class="icona" role="button" title="Area personale" @onclick="GoToProfile">
+                                <i class="fas fa-user"></i>
+                            </a>
+
+                            <form method="post"
+                                  action="/api/auth/logout"
+                                  class="logout-form"
+                                  style="margin:0; padding:0;">
+                                <input type="hidden" name="returnUrl" value="/" />
+                                <button type="submit" class="icona" title="Esci">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero" style="background-image:url('@heroImages[currentImageIndex]');">
+        <div class="hero-overlay"></div>
+        <div class="hero-content container">
+            <h1>Riparti in sicurezza, ogni volta</h1>
+            <p class="hero-subtitle">
+                Manutenzione di precisione per la tua auto
+            </p>
+        <a href="/prenota-appuntamento" class="btn-primary">Prenota Ora</a>
+        </div>
+    </section>
+
+    <section class="services">
+        <h2>I NOSTRI SERVIZI</h2>
+        <div class="cards">
+            <div class="card">
+                <div class="card-img" style="background-image:url('/Images/Index/Tagliando.png')"></div>
+                <h3>Tagliandi Completi</h3>
+                <p>Controllo freni, olio, filtri e sicurezza: mantieni la tua auto in perfette condizioni.</p>
+            </div>
+            <div class="card">
+                <div class="card-img" style="background-image:url('/Images/Index/Revisione.png')"></div>
+                <h3>Revisione Straordinaria</h3>
+                <p>Diagnosi elettronica e revisione integrale per un’auto sempre affidabile.</p>
+            </div>
+            <div class="card">
+                <div class="card-img" style="background-image:url('/Images/Index/Riparazione.png')"></div>
+                <h3>Riparazioni Motore</h3>
+                <p>Sostituzione e ripristino componenti di precisione: motori silenziosi e potenti.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="static-gallery">
+        <figure class="gallery-item">
+            <img src="/Images/Index/Carosello1.png" alt="Ponti sollevatori e strumenti in officina" />
+            <figcaption>Officina attrezzata:<br /> ponti sollevatori e strumenti di precisione</figcaption>
+        </figure>
+        <figure class="gallery-item">
+            <img src="/Images/Index/Carosello2.png" alt="Veicoli parcheggiati fuori dall'officina" />
+            <figcaption>Parcheggio clienti:<br /> veicoli in sosta e auto di cortesia</figcaption>
+        </figure>
+        <figure class="gallery-item">
+            <img src="/Images/Index/Carosello3.png" alt="Team di tecnici davanti all'officina" />
+            <figcaption>Il nostro team:<br /> tecnici specializzati al lavoro</figcaption>
+        </figure>
+    </section>
+
+    <section class="features">
+        <div class="features-list">
+            <div class="feature">
+                <i class="fas fa-tools fa-2x"></i>
+                <h4>Tecnici Certificati</h4>
+                <p>Team specializzato su tutti i modelli e marche.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-shield-alt fa-2x"></i>
+                <h4>Garanzia 12 mesi</h4>
+                <p>Su ogni intervento, pezzi e manodopera inclusi.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-car-side fa-2x"></i>
+                <h4>Auto Sostitutiva</h4>
+                <p>Veicolo di cortesia per non fermarti mai.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-calendar-check fa-2x"></i>
+                <h4>Preventivo Gratuito</h4>
+                <p>Stima chiara e senza impegno in pochi minuti.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-calendar-alt fa-2x"></i>
+                <h4>Prenotazione Online</h4>
+                <p>Blocca il tuo slot in officina con un click.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials container">
+        <h2>DICONO DI NOI</h2>
+        <div class="testi-list">
+            <div class="testi-item">
+                <img src="/images/Index/MarcoB.png" alt="Marco B." class="avatar-img" />
+                <div class="testo">
+                    <p>“In 2 ore mi hanno sostituito il turbo, l’auto è tornata come nuova.”</p>
+                    <span class="nome">Marco B. ,Perugia</span>
+                </div>
+            </div>
+
+            <div class="testi-item">
+                <img src="/images/Index/AnnaR.png" alt="Anna R." class="avatar-img" />
+                <div class="testo">
+                    <p>“Competenti, rapidissimi e trasparenti sui costi. Consigliatissimi!”</p>
+                    <span class="nome">Anna R. ,Assisi (PG)</span>
+                </div>
+            </div>
+
+            <div class="testi-item">
+                <img src="/images/Index/LuigiS.png" alt="Luigi S." class="avatar-img" />
+                <div class="testo">
+                    <p>“Tempi record e professionalità top! Consiglio vivamente.”</p>
+                    <span class="nome">Luigi S. ,Ponte San Giovanni (PG)</span>
+                </div>
+            </div>
+
+            <div class="testi-item">
+                <img src="/images/Index/ElenaT.png" alt="Elena T." class="avatar-img" />
+                <div class="testo">
+                    <p>“Preventivo chiaro e nessuna sorpresa: servizio eccellente!”</p>
+                    <span class="nome">Elena T. ,Villa Pitignano (PG)</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container footer-main">
+            <div class="footer-col footer-logo">
+                <div class="footer-logo-brand">
+                    <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                    <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+                </div>
+                <p class="footer-piva">P.IVA: 01234567890</p>
+            </div>
+
+            <div class="footer-col footer-contact">
+                <h4>Sede e Contatti</h4>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+            </div>
+
+            <div class="footer-col footer-hours">
+                <h4>Orari di Apertura</h4>
+                <p>
+                    LUN – VEN<br />
+                    8:00 – 12:30<br />
+                    14:30 – 18:00
+                </p>
+            </div>
+
+            <div class="footer-col footer-social">
+                <h4>Seguici</h4>
+                <div class="social-icons">
+                    <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="footer-legal">
+        <div class="container">
+            <p>
+                <a href="/privacy">Privacy Policy</a> |
+                <a href="/cookie">Cookie Policy</a> |
+            </p>
+        </div>
+    </div>
+
+
+@code {
+    private readonly string[] heroImages = new[]
+    {
+        "/Images/Index/Hero1.png",
+        "/Images/Index/Hero2.png",
+        "/Images/Index/Hero4.png"
+    };
+
+    private int currentImageIndex;
+
+    protected override void OnInitialized()
+    {
+        _ = RunSlideshowAsync();
+    }
+
+    private async Task RunSlideshowAsync()
+    {
+        while (true)
+        {
+            await Task.Delay(5000);
+            currentImageIndex = (currentImageIndex + 1) % heroImages.Length;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    private async Task GoToProfile()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.IsInRole("Admin"))
+        {
+            NavigationManager.NavigateTo("/admin");
+        }
+        else if (user.IsInRole("Mechanic"))
+        {
+            NavigationManager.NavigateTo("/mechanic");
+        }
+        else if (user.IsInRole("Customer"))
+        {
+            NavigationManager.NavigateTo("/customer");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}

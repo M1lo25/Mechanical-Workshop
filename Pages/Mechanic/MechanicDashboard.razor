@@ -1,0 +1,415 @@
+﻿@page "/mechanic"
+@attribute [Authorize(Roles = "Mechanic")]
+
+@using System.Security.Claims
+@using BlazorOfficina.Services
+@using BlazorOfficina.Data.Dtos 
+@using BlazorOfficina.Data.Models
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IRepairService RepairService
+@inject IAppointmentService AppointmentService
+@inject IVeicoloService VeicoloService
+@inject IQuoteService  QuoteService
+@inject IUserService UserService
+
+<div class="layout-container customer-dashboard">
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+                <span class="logo-text ms-2">Officina Meccanica Milani</span>
+            </a>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/servizi">Servizi</a>
+                <a href="/chisiamo">Chi Siamo</a>
+                <a href="/contatti">Contatti</a>
+            </nav>
+            <div class="iconeCliente">
+                <a class="icona">
+                    <i class="fas fa-bell"></i>
+                </a>
+                <AuthorizeView>
+                    <Authorized>
+                        <form method="post" action="api/auth/logout" class="logout-icon" style="margin:0; padding:0;">
+                            <input type="hidden" name="returnUrl" value="/" />
+                            <button type="submit" class="icona" title="Esci">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </form>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+
+    <div class="d-flex main-content">
+        <!-- SIDEBAR: stesse classi e struttura di CustomerDashboard -->
+        <aside class="sidebar bg-light border-end">
+            <div class="user-profile">
+                <img src="@ProfileImageUrl"
+                     alt="Foto profilo di @UserName"
+                     class="avatar" />
+                <div class="user-info">
+                    <div class="user-name">@UserName</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav px-2 py-3">
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic" Match="NavLinkMatch.All">
+                            <i class="fa-solid fa-tachometer-alt me-2"></i> Dashboard
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic/appointments">
+                            <i class="fa-solid fa-calendar-days me-2"></i> Appuntamenti
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic/preventivi">
+                            <i class="fa-solid fa-file-invoice-dollar me-2"></i> Preventivi
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic/vehicles">
+                            <i class="fa-solid fa-car-side me-2"></i> Veicoli
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <NavLink class="nav-link mb-1" href="/mechanic/customers">
+                            <i class="fa-solid fa-users me-2"></i> Clienti
+                        </NavLink>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- MAIN PANEL: replica contenuto esistente -->
+        <main class="dashboard-panel">
+
+            <section class="dashboard-header">
+                <div class="welcome-text">
+                    <h2>Benvenuto, @UserName!</h2>
+                    <p>Ecco una panoramica delle tue attività con Officina Milani</p>
+                </div>
+            </section>
+
+            <!-- RIEPILOGHI CUSTOM -->
+            <section class="stats-cards ">
+                    <div class="stat-card card-appointment">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Appuntamenti oggi</div>
+                            <div class="stat-value">@TodayAppointmentsCount</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-repair">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-tools"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Riparazioni in corso</div>
+                            <div class="stat-value">@OngoingRepairsCount</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-vehicle">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-car-side"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Veicoli in attesa</div>
+                            <div class="stat-value">@PendingVehiclesCount</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-quote">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Preventivi da confermare</div>
+                            <div class="stat-value">@PendingQuotesCount</div>
+                        </div>
+                    </div>
+            </section>
+
+
+
+
+            <section class="upcoming-appointments">
+                <div class="upcoming-header">
+                    <h3>Prossimi appuntamenti</h3>
+                    <a class="see-all" href="/mechanic/appointments">Vedi tutti &gt;</a>
+                </div>
+
+                @if (!UpcomingAppointments.Any())
+                {
+                    <p class="no-items">Nessun appuntamento futuro.</p>
+                }
+                else
+                {
+                    <div class="appointment-list">
+                        @foreach (var a in UpcomingAppointments)
+                        {
+                            <div class="appointment-item">
+                                <div class="item-icon">
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                </div>
+                                <div class="item-info">
+                                    <div class="item-title">@a.ServizioNome</div>
+                                    <div class="item-details">
+                                        @a.VeicoloTarga &nbsp;–&nbsp;
+                                        @a.Inizio.ToString("dd MMM yyyy, HH:mm")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+
+            <section class="upcoming-appointments">
+                <div class="upcoming-header">
+                    <h3>Preventivi da confermare</h3>
+                    <a class="see-all" href="/mechanic/preventivi">Vedi tutti &gt;</a>
+                </div>
+
+                @if (!PendingQuotesList.Any())
+                {
+                    <p class="no-items">Nessun preventivo da confermare.</p>
+                }
+                else
+                {
+                    <div class="appointment-list">
+                        @foreach (var q in PendingQuotesList)
+                        {
+                            <div class="appointment-item">
+                                <div class="item-icon">
+                                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                                </div>
+                                <div class="item-info">
+                                    <div class="item-title">@q.Titolo</div>
+                                    <div class="item-details">
+                                        <strong>@q.ModelloVeicolo</strong> – @q.TargaVeicolo
+                                    </div>
+                                    <div class="item-details">
+                                        € @q.Totale.ToString("N2")
+                                    </div>
+                                    <div class="item-details">
+                                        @q.DataCreazione.ToString("dd/MM/yyyy")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="upcoming-appointments mt-4">
+                <div class="upcoming-header">
+                    <h3>Preventivi elaborati</h3>
+                    <a class="see-all" href="/mechanic/preventivi">Vedi tutti &gt;</a>
+                </div>
+
+                @if (!ProcessedQuotesList.Any())
+                {
+                    <p class="no-items">Nessun preventivo elaborato.</p>
+                }
+                else
+                {
+                    <div class="appointment-list">
+                        @foreach (var q in ProcessedQuotesList)
+                        {
+                            <div class="appointment-item">
+                                <div class="item-icon">
+                                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                                </div>
+                                <div class="item-info">
+                                    <div class="item-title">@q.Titolo</div>
+                                    <div class="item-details">
+                                        <strong>@q.ModelloVeicolo</strong> – @q.TargaVeicolo
+                                    </div>
+                                    <div class="item-details">
+                                        € @q.Totale.ToString("N2")
+                                    </div>
+                                    <div class="item-details">
+                                        @q.DataCreazione.ToString("dd/MM/yyyy")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+    
+        </main>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container footer-main">
+            <div class="footer-col footer-logo">
+                <div class="footer-logo-brand">
+                    <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                    <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+                </div>
+                <p class="footer-piva">P.IVA: 01234567890</p>
+            </div>
+
+            <!-- Colonna 2: sede e contatti -->
+            <div class="footer-col footer-contact">
+                <h4>Sede e Contatti</h4>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+            </div>
+
+            <!-- Colonna 3: orari di apertura -->
+            <div class="footer-col footer-hours">
+                <h4>Orari di Apertura</h4>
+                <p>
+                    LUN – VEN<br />
+                    8:00 – 12:30<br />
+                    14:30 – 18:00
+                </p>
+            </div>
+
+            <!-- Colonna 4: social + WhatsApp -->
+            <div class="footer-col footer-social">
+                <h4>Seguici</h4>
+                <div class="social-icons">
+                    <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- Riga note legali -->
+    <div class="footer-legal">
+        <div class="container">
+            <p>
+                <a href="/privacy">Privacy Policy</a> |
+                <a href="/cookie">Cookie Policy</a> |
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int TodayAppointmentsCount;
+    private int OngoingRepairsCount;
+    private int PendingVehiclesCount;
+    private int PendingQuotesCount;
+
+    private string userId = string.Empty;
+    private string UserName = string.Empty;
+    private string ProfileImageUrl = "/images/default-profile.png";
+
+    private IEnumerable<MechanicAppointmentDto> appointments = Enumerable.Empty<MechanicAppointmentDto>();
+    private IEnumerable<MechanicAppointmentDto> UpcomingAppointments =>
+        appointments.Where(a => a.Inizio > DateTime.Now);
+
+    private List<PreventivoDto> PendingQuotesList = new();
+    private List<PreventivoDto> ProcessedQuotesList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (idClaim is not null)
+        {
+            userId = idClaim.Value;  
+        }
+        else
+        {
+            userId = string.Empty;
+        }
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            TodayAppointmentsCount = await AppointmentService
+                .GetTodaysCountForMechanicAsync(userId);
+            OngoingRepairsCount = await AppointmentService.GetCurrentAppointmentsCountForMechanicAsync(userId);
+            PendingQuotesCount = await QuoteService
+                .GetPendingQuotesCountForMechanicAsync(userId);
+            PendingVehiclesCount = await VeicoloService
+                .GetPendingVehiclesCountForMechanicAsync(userId);
+
+            UserName = user.Identity?.Name ?? "Meccanico";
+
+            appointments = await AppointmentService.GetByMechanicAsync(userId);
+
+            await ReloadQuotes();
+        }
+        else
+        {
+            TodayAppointmentsCount = 0;
+            OngoingRepairsCount = 0;
+            PendingVehiclesCount = 0;
+            PendingQuotesCount = 0;
+
+            UserName = "Meccanico";
+            ProfileImageUrl = "/images/default-profile.png";
+
+            appointments = Enumerable.Empty<MechanicAppointmentDto>();
+            PendingQuotesList = new List<PreventivoDto>();
+            ProcessedQuotesList = new List<PreventivoDto>();
+        }
+    }
+
+    private async Task CancelAppointment(int appointmentId)
+    {
+        await AppointmentService.CancelAppointmentAsync(appointmentId, userId!);
+        appointments = await AppointmentService.GetByMechanicAsync(userId!);
+    }
+
+    private async Task ConfirmQuote(int quoteId)
+    {
+        await QuoteService.ConfirmQuoteAsync(quoteId);
+        await ReloadQuotes();
+    }
+
+    private async Task RejectQuote(int quoteId)
+    {
+        await QuoteService.UpdatePreventivoStatusAsync(quoteId, int.Parse(userId!), PreventivoStatus.Rejected);
+        await ReloadQuotes();
+    }
+
+    private async Task ReloadQuotes()
+    {
+        PendingQuotesList = await QuoteService.GetPendingQuotesAsync();
+        PendingQuotesCount = PendingQuotesList.Count;
+
+        var allForMech = await QuoteService.GetAllEstimatesForMechanicAsync(userId!);
+        ProcessedQuotesList = allForMech
+            .Where(q => q.Status != PreventivoStatus.Pending)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private string GetBadgeText(AppointmentStatus s) => s switch
+    {
+        AppointmentStatus.InAttesa => "In attesa",
+        AppointmentStatus.InLavorazione => "In lavorazione",
+        AppointmentStatus.Completato => "Completato",
+        _ => ""
+    };
+
+    private void ApriDettaglio(int id) =>
+        NavigationManager.NavigateTo($"/mechanic/repair/{id}");
+
+}

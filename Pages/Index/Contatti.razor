@@ -1,0 +1,324 @@
+﻿@page "/contatti"
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="utf-8" />
+    <title>Contatti – Officina Meccanica Milani</title>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/Images/Index/LogoHome.png" class="logo-img" alt="Logo Officina" />
+                <span class="logo-text">Officina Meccanica Milani</span>
+            </a>
+
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/servizi">Servizi</a>
+                <a href="/chisiamo">Chi Siamo</a>
+                <a href="/contatti" class="active">Contatti</a>
+            </nav>
+
+            <div class="icone">
+                <a href="#" class="icona language-switcher" title="Seleziona lingua">
+                    <img src="/Images/Index/BandieraIt.jpg" alt="IT" class="flag-icon" />
+                    <span class="lang-code">IT</span>
+                    <i class="fas fa-chevron-down chevron-icon"></i>
+                </a>
+
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <a href="/login" class="icona" title="Accedi">
+                            <i class="fas fa-user"></i>
+                        </a>
+                    </NotAuthorized>
+                    <Authorized>
+                        <div class="auth-icons">
+                            <a class="icona" role="button" title="Area personale" @onclick="GoToProfile">
+                                <i class="fas fa-user"></i>
+                            </a>
+                            <form method="post" action="/api/auth/logout" class="logout-form">
+                                <input type="hidden" name="returnUrl" value="/" />
+                                <button type="submit" class="icona" title="Esci">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+
+    <main class="contatti-page">
+        <section class="banner">
+            <div class="container">
+                <h1>Contattaci</h1>
+                <p>Siamo a tua disposizione per qualsiasi domanda o informazione. Prenota un appuntamento o vieni a trovarci in officina.</p>
+            </div>
+        </section>
+
+        <section class="cards container">
+            <div class="cardCC">
+                <div class="icon-circle-contatti blue">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h2>Dove siamo</h2>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <a href="https://maps.google.com?q=Via+Roma+123+Milano" target="_blank">Vedi sulla mappa&nbsp;<i class="fas fa-arrow-right"></i></a>
+            </div>
+
+            <div class="cardCC">
+                <div class="icon-circle-contatti green">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <h2>Telefono</h2>
+                <p>075 69409632<br /><small>Lun–Ven: 8:00–18:00</small></p>
+                <a href="tel:+3907569409632"><i class="fas fa-phone-square-alt"></i>&nbsp;Chiama ora</a>
+            </div>
+
+            <div class="cardCC">
+                <div class="icon-circle-contatti purple">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h2>Email</h2>
+                <p>info@officinamilani.it<br /><small>Rispondiamo entro 24 ore</small></p>
+                <a href="/contatti#form">Scrivi un messaggio&nbsp;<i class="fas fa-arrow-right"></i></a>
+            </div>
+        </section>
+    </main>
+
+    <section class="map-section">
+        <div class="container">
+            <h2>Dove Siamo</h2>
+            <div class="map-container">
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2910.1234567890123!2d12.388123456789!3d43.108765432109!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x132ac47b8e123456%3A0xabcdef1234567890!2sVia%20dell%27Elce%20di%20Sotto%2025%2C%2006134%20Perugia!5e0!3m2!1sit!2sit!4v0000000000000"
+                        style="width:100%; height:400px; border:0;"
+                        allowfullscreen
+                        loading="lazy">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <section class="contact-form container">
+        <h2>Scrivi un messaggio</h2>
+        <p class="form-subtitle">
+            Compila il form sottostante per qualsiasi richiesta o informazione.
+            Ti risponderemo al più presto.
+        </p>
+
+        <form @onsubmit="HandleSubmit" novalidate>
+            <h3 class="section-title">1. Dati personali</h3>
+            <div class="form-grid">
+                <div class="form-group icon-input">
+
+                    <input type="text"
+                           id="firstName"
+                           name="firstName"
+                           class="form-control"
+                           placeholder="Mario"
+                           @bind="msg.FirstName"
+                           required />
+                </div>
+                <div class="form-group icon-input">
+
+                    <input type="text"
+                           id="lastName"
+                           name="lastName"
+                           class="form-control"
+                           placeholder="Rossi"
+                           @bind="msg.LastName"
+                           required />
+                </div>
+                <div class="form-group icon-input">
+
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           class="form-control"
+                           placeholder="tuo@esempio.it"
+                           @bind="msg.Email"
+                           required />
+                </div>
+                <div class="form-group icon-input">
+
+                    <input type="tel"
+                           id="phone"
+                           name="phone"
+                           class="form-control"
+                           placeholder="+39 123 4567890"
+                           @bind="msg.Phone" />
+                </div>
+            </div>
+
+            <h3 class="section-title">2. Dettagli veicolo</h3>
+            <div class="form-grid">
+                <div class="form-group icon-input">
+
+                    <select id="brand"
+                            name="brand"
+                            class="form-control"
+                            @bind="msg.Brand">
+                        <option value="">Seleziona marca</option>
+                        <option>Fiat</option>
+                        <option>Renault</option>
+                        <option>Volkswagen</option>
+                    </select>
+                </div>
+                <div class="form-group icon-input">
+
+                    <input type="text"
+                           id="model"
+                           name="model"
+                           class="form-control"
+                           placeholder="Modello (es. Panda)"
+                           @bind="msg.Model" />
+                </div>
+                <div class="form-group full-width icon-input">
+
+                    <select id="service"
+                            name="service"
+                            class="form-control"
+                            @bind="msg.Service">
+                        <option value="">Seleziona servizio</option>
+                        <option>Tagliando</option>
+                        <option>Revision</option>
+                        <option>Riparazioni</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3 class="section-title">3. Il tuo messaggio</h3>
+            <div class="form-group full-width">
+                <textarea id="message"
+                          name="message"
+                          class="form-control"
+                          rows="5"
+                          placeholder="Scrivi qui la tua richiesta…"
+                          @bind="msg.Message"
+                          required>
+                </textarea>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox"
+                       id="privacy"
+                       name="privacy"
+                       @bind="msg.AcceptPrivacy"
+                       required />
+                <label for="privacy">
+                    Acconsento al trattamento dei miei dati secondo la
+                    <a href="/privacy">Privacy Policy</a>
+                </label>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-paper-plane"></i> Invia messaggio
+            </button>
+        </form>
+    </section>
+
+    <footer class="footer contatti-footer">
+        <section class="help-section">
+            <div class="container">
+                <h2>Hai bisogno di assistenza immediata?</h2>
+                <p>Il nostro team è disponibile per emergenze e interventi urgenti. Chiamaci subito!</p>
+                <div class="help-buttons">
+                    <a href="tel:+3907569409632" class="btn-call">
+                        <i class="fas fa-phone-alt"></i>
+                        075 69409632
+                    </a>
+                    <a href="/prenota-appuntamento" class="btn-book">
+                        Prenota online
+                        <i class="fas fa-calendar-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+        <div class="container footer-main">
+            <div class="footer-col footer-logo">
+                <div class="footer-logo-brand">
+                    <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
+                    <span class="footer-logo-text">Officina<br />Meccanica<br />Milani</span>
+                </div>
+                <p class="footer-piva">P.IVA: 01234567890</p>
+            </div>
+            <div class="footer-col footer-contact">
+                <h4>Sede e Contatti</h4>
+                <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
+                <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
+            </div>
+            <div class="footer-col footer-hours">
+                <h4>Orari di Apertura</h4>
+                <p>
+                    LUN – VEN<br />
+                    8:00 – 12:30<br />
+                    14:30 – 18:00
+                </p>
+            </div>
+            <div class="footer-col footer-social">
+                <h4>Seguici</h4>
+                <div class="social-icons">
+                    <a aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div class="footer-legal">
+        <div class="container">
+            <p>
+                <a href="/privacy">Privacy Policy</a> |
+                <a href="/cookie">Cookie Policy</a> |
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+@code {
+    private async Task GoToProfile()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.IsInRole("Admin"))
+            NavigationManager.NavigateTo("/admin");
+        else if (user.IsInRole("Mechanic"))
+            NavigationManager.NavigateTo("/mechanic");
+        else if (user.IsInRole("Customer"))
+            NavigationManager.NavigateTo("/customer");
+        else
+            NavigationManager.NavigateTo("/");
+    }
+
+
+    private MessageModel msg = new MessageModel();
+    private async Task HandleSubmit()
+    {
+        await Task.Yield();
+    }
+
+    public class MessageModel
+    {
+        [Required] public string FirstName { get; set; } = string.Empty;
+        [Required] public string LastName { get; set; } = string.Empty;
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Brand { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public string Service { get; set; } = string.Empty;
+        [Required] public string Message { get; set; } = string.Empty;
+        [Range(typeof(bool), "true", "true", ErrorMessage = "Devi accettare la privacy.")]
+        public bool AcceptPrivacy { get; set; }
+    }
+}
