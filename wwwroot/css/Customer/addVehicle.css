@@ -1,0 +1,290 @@
+﻿/* ================================
+   Palette aziendale
+   ================================ */
+:root {
+    --av-primary: #e67e22; /* arancione vivo */
+    --av-secondary: #bdc3c7; /* grigio chiaro */
+    --av-bg-dark: #1f1f1f; /* quasi nero, fondo generale */
+    --av-card-bg: #2c2c2c; /* sfondo form */
+    --av-border: #3a3a3a; /* bordo scuro */
+    --av-text: #ecf0f1; /* testo chiaro */
+    --av-placeholder: #7f8c8d; /* placeholder scuro */
+}
+
+/* ================================
+   Container del form (card dark)
+   ================================ */
+.add-veicolo-container {
+    max-width: 720px;
+    margin: 4rem auto;
+    padding: 2rem;
+    background: var(--av-card-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--av-text);
+}
+
+/* ================================
+   Titolo e icona header
+   ================================ */
+.add-veicolo-header {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    color: var(--av-primary);
+}
+
+    .add-veicolo-header .fa-car {
+        margin-right: 0.75rem;
+    }
+
+/* ================================
+   Sezioni e titoli
+   ================================ */
+.add-veicolo-section-title {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--av-secondary);
+}
+
+    .add-veicolo-section-title .fa-info-circle,
+    .add-veicolo-section-title .fa-file-alt {
+        margin-right: 0.5rem;
+        color: var(--av-primary);
+    }
+
+/* ================================
+   Tipo di veicolo (card btn)
+   ================================ */
+.add-veicolo-tipo-veicolo {
+    display: flex;
+    gap: 1rem;
+}
+
+.add-veicolo-tipo-card {
+    flex: 1;
+    background: var(--av-bg-dark);
+    border: 1px solid var(--av-border);
+    border-radius: 6px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    color: var(--av-text);
+}
+
+    .add-veicolo-tipo-card:hover {
+        border-color: var(--av-primary);
+        background: #343434;
+    }
+
+    .add-veicolo-tipo-card.selected {
+        border-color: var(--av-primary);
+        background: #343434;
+        box-shadow: 0 0 8px rgba(230,126,34,0.5);
+    }
+
+    .add-veicolo-tipo-card {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+        color: var(--av-secondary);
+    }
+
+/* ================================
+   Campi form
+   ================================ */
+.add-veicolo-field {
+    margin-bottom: 1.5rem;
+}
+
+    .add-veicolo-field label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--av-secondary);
+    }
+
+    .add-veicolo-field input,
+    .add-veicolo-field select,
+    .add-veicolo-field textarea {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        background: var(--av-bg-dark);
+        border: 1px solid var(--av-border);
+        border-radius: 4px;
+        color: var(--av-text);
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        .add-veicolo-field input::placeholder,
+        .add-veicolo-field textarea::placeholder {
+            color: var(--av-placeholder);
+        }
+
+        .add-veicolo-field input:focus,
+        .add-veicolo-field select:focus,
+        .add-veicolo-field textarea:focus {
+            outline: none;
+            border-color: var(--av-primary);
+            box-shadow: 0 0 0 3px rgba(230,126,34,0.2);
+        }
+
+/* ================================
+   Fila doppia (Anno/Targa)
+   ================================ */
+.add-veicolo-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.add-veicolo-col {
+    flex: 1;
+}
+
+/* ================================
+   Checkbox semplice
+   ================================ */
+.add-veicolo-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+    .add-veicolo-checkbox input {
+        width: 1rem;
+        height: 1rem;
+        accent-color: var(--av-primary);
+    }
+
+    .add-veicolo-checkbox label {
+        color: var(--av-text);
+        font-size: 0.9rem;
+    }
+
+/* ================================
+   Azioni (bottoni)
+   ================================ */
+.add-veicolo-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.add-veicolo-btn-cancel {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--av-secondary);
+    background: transparent;
+    color: var(--av-text);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+    .add-veicolo-btn-cancel:hover {
+        background: var(--av-secondary);
+        color: var(--av-card-bg);
+    }
+
+.add-veicolo-btn-save {
+    padding: 0.5rem 1rem;
+    background: var(--av-primary);
+    border: none;
+    color: var(--av-bg-dark);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+    .add-veicolo-btn-save:hover {
+        background: #d35400;
+    }
+
+
+
+
+
+/* Container: maggiore gap */
+.add-veicolo-docs-toggle {
+    display: flex;
+    gap: 2rem; /* aumenta la distanza */
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Nascondi il checkbox vero */
+.add-veicolo-doc-toggle-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Label come pill-button */
+.add-veicolo-doc-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem; /* più grande */
+    border: 1px solid var(--av-border);
+    border-radius: 999px; /* forma pill */
+    background-color: var(--av-card-bg);
+    color: var(--av-text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+    /* Tutte le icone dentro la pill hanno la stessa size e width */
+    .add-veicolo-doc-toggle-label i {
+        font-size: 1.2rem; /* dimensione uniforme */
+        width: 1.5em; /* larghezza fissa */
+        display: inline-block; /* per rispettare la width */
+        text-align: center; /* icona centrata dentro il box */
+    }
+
+
+    /* Hover state */
+    .add-veicolo-doc-toggle-label:hover {
+        background-color: var(--av-secondary);
+        color: var(--av-card-bg);
+        border-color: var(--av-secondary);
+    }
+
+/* Stato “checked” */
+.add-veicolo-doc-toggle-input:checked + .add-veicolo-doc-toggle-label {
+    background-color: var(--av-primary);
+    border-color: var(--av-primary);
+    color: var(--av-card-bg);
+    box-shadow: 0 0 6px rgba(230,126,34,0.5);
+}
+
+
+/* ================================
+   Input group (km)
+   ================================ */
+.input-group {
+    display: flex;
+}
+
+.input-group-text {
+    padding: 0.6rem 0.8rem;
+    background: var(--av-bg-dark);
+    border: 1px solid var(--av-border);
+    border-left: none;
+    color: var(--av-placeholder);
+    border-radius: 0 4px 4px 0;
+    display: inline-flex;
+    align-items: center;
+}

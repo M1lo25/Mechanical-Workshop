@@ -1,0 +1,364 @@
+﻿
+
+
+
+/* ===== REPAIRS TABLE PANEL ===== */
+.repairs-table {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+
+/* tabella */
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .table-custom th,
+    .table-custom td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .table-custom thead {
+        background-color: #2d2d2d;
+    }
+
+        .table-custom thead th {
+            color: #fff;
+            font-weight: 600;
+        }
+
+    .table-custom tbody tr {
+        background-color: #1e1e1e;
+        border-bottom: 1px solid #333;
+    }
+
+        .table-custom tbody tr:hover {
+            background-color: #2a2a2a;
+        }
+
+    .table-custom td {
+        color: #ccc;
+        font-size: 0.9rem;
+    }
+
+/* pulsante dettagli */
+.btn-detail {
+    background-color: #cc5500;
+    color: #fff;
+    border: none;
+    border-radius: 0.35rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+    .btn-detail:hover {
+        background-color: #e07a3e;
+    }
+
+/* ===== EMPTY STATE ===== */
+.repairs-table p,
+.repairs-table em {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    margin: 2rem 0;
+}
+
+
+
+
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.time {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.appointment-inattesa .badge {
+    background-color: #facc15;
+}
+
+.appointment-inlavorazione .badge {
+    background-color: #3b82f6;
+}
+
+.appointment-completato .badge {
+    background-color: #10b981;
+}
+
+.card-body {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.service {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+}
+
+.details, .duration, .cost {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.cost {
+    margin-top: auto;
+    font-weight: bold;
+    text-align: right;
+}
+
+
+
+.upcoming-appointments {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 2rem;
+}
+
+.upcoming-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+    .upcoming-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .upcoming-header .see-all {
+        color: #f97316;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+.appointment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.appointment-item {
+    display: flex;
+    align-items: center;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.item-icon {
+    flex: 0 0 auto;
+    font-size: 1.5rem;
+    color: #f97316;
+    margin-right: 0.75rem;
+}
+
+.item-info {
+    flex: 1 1 auto;
+}
+
+.item-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.item-details {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.appointment-item .btn {
+    flex: 0 0 auto;
+}
+
+
+.card.quote-pending {
+    border-color: #fbbf24;
+    background: #fffbeb;
+}
+
+
+.upcoming-appointments {
+    margin: 1.3rem 0;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+    .upcoming-appointments h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.25rem;
+        color: #252525;
+    }
+
+    .upcoming-appointments .see-all {
+        color: #ff6600;
+        font-weight: 500;
+        text-decoration: none;
+        transition: opacity 0.2s, transform 0.2s;
+    }
+
+        .upcoming-appointments .see-all:hover {
+            opacity: 0.8;
+            transform: translateX(3px);
+        }
+
+    .upcoming-appointments .no-items {
+        background: #fdbb8c; 
+        color: #252525;
+        padding: 0.75rem 1rem;
+        border-radius: 0.25rem;
+        font-size: 0.95rem;
+        margin-top: 1rem;
+    }
+
+    .upcoming-appointments .appointment-list,
+    .upcoming-appointments .quote-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 0; 
+    }
+
+    .upcoming-appointments .appointment-item {
+        background: #fff5eb; 
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .upcoming-appointments .appointment-item i {
+            font-size: 1.75rem;
+            color: #fd8c4f; 
+            margin-right: 1rem;
+        }
+
+        .upcoming-appointments .appointment-item .item-info .item-title {
+            display: block;
+            font-size: 1rem;
+            color: #374151; 
+            margin-bottom: 0.25rem;
+        }
+
+        .upcoming-appointments .appointment-item .item-info .item-details {
+            font-size: 0.85rem;
+            color: #6b7280;
+            display: block;
+        }
+
+        .upcoming-appointments .appointment-item .item-actions button {
+            background: transparent;
+            border: 1px solid #fd8c4f;
+            color: #fd8c4f;
+            border-radius: 0.3rem;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+            .upcoming-appointments .appointment-item .item-actions button:hover {
+                background: #fd8c4f;
+                color: #ffffff;
+            }
+
+    .upcoming-appointments .quote-item {
+        background: #fff5eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .upcoming-appointments .quote-item i {
+            font-size: 1.75rem;
+            color: #fd8c4f;
+            margin-right: 1rem;
+        }
+
+        .upcoming-appointments .quote-item .item-info .item-title {
+            display: block;
+            font-size: 1rem;
+            color: #374151;
+            margin-bottom: 0.25rem;
+        }
+
+        .upcoming-appointments .quote-item .item-info .item-details {
+            font-size: 0.85rem;
+            color: #6b7280;
+            display: block;
+        }
+
+        .upcoming-appointments .quote-item .item-actions button {
+            background: transparent;
+            border: 1px solid #fd8c4f;
+            color: #fd8c4f;
+            border-radius: 0.3rem;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+            .upcoming-appointments .quote-item .item-actions button:hover {
+                background: #fd8c4f;
+                color: #ffffff;
+            }
+
+    .upcoming-appointments.mt-4 {
+        margin-top: 1.5rem; 
+    }
+
+
+
+

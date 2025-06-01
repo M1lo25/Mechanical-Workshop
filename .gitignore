@@ -1,0 +1,73 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Rider
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# NuGet packages
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# DotNet build
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.meta
+*.obj
+*.log
+*.vspscc
+
+# Azure Web App publish settings
+PublishProfiles/
+
+# Microsoft Azure Web App publish settings
+*.Publish.xml
+
+# User-specific files
+*.rsuser
+*.rsuserdata
+*.resharper
+_ReSharper*/
+
+# SQL Server files
+*.mdf
+*.ldf
+
+# LocalDB
+*.mdf
+*.ldf
+App_Data/
+
+# IIS Express
+.vs/Config/
+
+# Timeout file
+Thumbs.db
+
+# Files di log
+*.log
+
+# SQLite
+*.db
+*.sqlite
+
+# Assets di Node (se presenti)
+node_modules/
+
+# Cartelle temporanee
+temp/

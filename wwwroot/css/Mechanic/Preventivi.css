@@ -1,0 +1,325 @@
+﻿/* =========================================
+   Variabili globali tema Officina
+   ========================================= */
+:root {
+    --mech-bg-dark: #1f1f1f;
+    --mech-bg-light: #282828;
+    --mech-bg-white: #ffffff;
+    --mech-primary: #d35400; /* arancione scuro */
+    --mech-primary-light: #e67e22;
+    --mech-gray-light: #3a3a3a;
+    --mech-gray: #4f4f4f;
+    --mech-gray-dark: #2c2c2c;
+    --mech-success: #27ae60;
+    --mech-danger: #c0392b;
+    --mech-font-base: 16px;
+    --mech-border-radius: 0.375rem;
+    --mech-transition-fast: 0.15s ease-in-out;
+}
+
+/* =========================================
+   Base
+   ========================================= */
+
+
+/* =========================================
+   Header e toolbar
+   ========================================= */
+.mech-page-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--mech-bg-dark);
+    margin-top:3rem;
+    margin-bottom:2rem;
+}
+
+.mech-page-title {
+    margin-top:1rem;
+    margin-left:2rem;
+    color: #cc5500;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display:flex;
+    justify-content:center;
+}
+
+.mech-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--mech-border-radius);
+}
+
+/* Search bar */
+.mech-search-bar {
+    position: relative;
+    flex: 1 1 300px;
+}
+
+.mech-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    color: #838383;
+    font-size: 1.1rem;
+}
+
+.mech-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    background: var(--mech-bg-dark);
+    border: 1px solid var(--mech-gray);
+    border-radius: var(--mech-border-radius);
+    color: #fff;
+    transition: border var(--mech-transition-fast);
+}
+
+    .mech-search-input::placeholder {
+        color: #838383;
+    }
+
+    .mech-search-input:focus {
+        border-color: var(--mech-primary);
+        outline: none;
+    }
+
+/* Select & filter */
+.mech-status-select,
+.mech-filter-btn {
+    height: 2.5rem;
+    line-height: 2.5rem;
+}
+
+.mech-status-select {
+    padding: 0 0.75rem;
+    background: var(--mech-bg-dark);
+    border: 1px solid var(--mech-gray);
+    border-radius: var(--mech-border-radius);
+    color: var(--mech-bg-white);
+    transition: border var(--mech-transition-fast);
+}
+
+    .mech-status-select:focus {
+        border-color: var(--mech-primary);
+        outline: none;
+    }
+
+.mech-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--mech-primary);
+    border: none;
+    border-radius: var(--mech-border-radius);
+    color: var(--mech-bg-white);
+    padding: 0 1rem;
+    cursor: pointer;
+    transition: background var(--mech-transition-fast);
+}
+
+    .mech-filter-btn:hover {
+        background: var(--mech-primary-light);
+    }
+
+/* =========================================
+   Elenco preventivi (card‐grid)
+   ========================================= */
+.mech-quotes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1rem;
+    margin-bottom:2rem;
+}
+
+/* Header colonne */
+.mech-quotes-header {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr 0.8fr 0.8fr 0.6fr;
+    padding: 0.75rem 1rem;
+    background: var(--mech-bg-light);
+    border-radius: var(--mech-border-radius);
+    color: var(--mech-bg-white);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* Righe dati */
+.mech-quote-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr 0.8fr 0.8fr 0.6fr;
+    align-items: center;
+    padding: 1rem;
+    background: var(--mech-bg-light);
+    color: var(--mech-bg-white);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    border-radius: var(--mech-border-radius);
+    transition: transform var(--mech-transition-fast);
+}
+
+    .mech-quote-row:hover {
+        transform: translateY(-2px);
+    }
+
+/* Celle */
+.mech-cliente-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mech-veicolo-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mech-servizio-cell,
+.mech-importo-cell,
+.mech-stato-cell,
+.mech-data-cell,
+.mech-azioni-cell {
+    display: flex;
+    align-items: center;
+    gap:0.5rem;
+}
+
+/* Icona utente */
+.mech-icon-user {
+    font-size: 1.6rem;
+    color: var(--mech-primary);
+}
+
+/* Badge servizio */
+.mech-badge-servizio {
+    padding: 0.4rem 0.8rem;
+    background: var(--mech-primary);
+    color: var(--mech-bg-white);
+    border-radius: var(--mech-border-radius);
+    font-size: 0.75rem;
+}
+
+/* Badge stato */
+.mech-badge-pending {
+    background: #ffc107; /* giallo carico */
+    color: var(--mech-bg-white);
+    padding:0.15rem;
+}
+
+.mech-badge-confirmed {
+    background: var(--mech-success);
+    color: var(--mech-bg-white);
+    padding: 0.15rem;
+}
+
+.mech-badge-rejected {
+    background: var(--mech-danger);
+    color: var(--mech-bg-white);
+    padding: 0.15rem;
+}
+
+/* Importo & Data */
+.mech-importo-cell,
+.mech-data-cell {
+    font-weight: 500;
+}
+
+/* Pulsanti azioni */
+.mech-btn-view,
+.mech-btn-confirm,
+.mech-btn-reject {
+    width: 2.2rem;
+    height: 2.2rem;
+    border: none;
+    border-radius: 50%;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--mech-transition-fast), transform var(--mech-transition-fast);
+}
+
+.mech-btn-view {
+    background: var(--mech-gray-light);
+    color: var(--mech-gray);
+}
+
+    .mech-btn-view:hover {
+        background: var(--mech-gray);
+        color: var(--mech-bg-white);
+    }
+
+.mech-btn-confirm {
+    background: var(--mech-success);
+    color: var(--mech-bg-white);
+}
+
+    .mech-btn-confirm:hover {
+        background: #2ecc71;
+        transform: scale(1.1);
+    }
+
+.mech-btn-reject {
+    background: var(--mech-danger);
+    color: var(--mech-bg-white);
+}
+
+    .mech-btn-reject:hover {
+        background: #e74c3c;
+        transform: scale(1.1);
+    }
+
+/* =========================================
+   Paginazione
+   ========================================= */
+.mech-pagination {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin: 1rem;
+    margin-bottom:2rem;
+}
+
+.mech-page-btn,
+.mech-page-number {
+    padding: 0.5rem 0.8rem;
+    background: var(--mech-bg-light);
+    color: var(--mech-bg-white);
+    border: 1px solid var(--mech-gray);
+    border-radius: var(--mech-border-radius);
+    cursor: pointer;
+    transition: background var(--mech-transition-fast);
+}
+
+    .mech-page-number.active {
+        background: var(--mech-primary);
+        border-color: var(--mech-primary);
+    }
+
+    .mech-page-btn[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .mech-page-number:hover:not(.active) {
+        background: var(--mech-primary-light);
+    }
+
+/* =========================================
+   Messaggi caricamento / nessun dato
+   ========================================= */
+.mech-loading,
+.mech-no-data {
+    margin: 2rem;
+    text-align: center;
+    color: var(--mech-gray);
+    font-style: italic;
+}

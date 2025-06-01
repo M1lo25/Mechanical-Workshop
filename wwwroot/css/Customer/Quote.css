@@ -1,0 +1,318 @@
+﻿/* ================================
+   Palette di colori
+================================ */
+:root {
+    --bg-page: #121212;
+    --bg-panel: #1E1E1E;
+    --bg-card: #252525;
+    --bg-card-hover: #2A2A2A;
+    --bg-accent: #FF7A00;
+    --text-primary: #E0E0E0;
+    --text-secondary: #B3B3B3;
+    --text-placeholder: #666666;
+    --border: #333333;
+    --border-alt: #444444;
+    --error-red: #FF4D4D;
+}
+
+/* ================================
+   Body & Containers
+================================ */
+body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: "Segoe UI", sans-serif;
+}
+
+.quote-form {
+    background-color: var(--bg-panel);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    max-width: 1100px;
+    margin: 3rem auto;
+}
+
+.field-group {
+    margin-bottom: 2.5rem;
+}
+
+/* ================================
+   Titoli & Testi
+================================ */
+.page-title {
+    color: var(--bg-accent);
+    font-size: 2.2rem;
+    font-weight: 600;
+    margin: 2rem 0 1rem 9rem;
+}
+
+.field-label {
+    color: var(--text-primary);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.loading-text {
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+.selected-services-summary h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+    color: var(--text-primary);
+}
+
+/* ================================
+   Inputs & Textarea
+================================ */
+.search-input,
+.custom-textarea {
+    width: 100%;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    font-size: 1rem;
+}
+
+.search-input {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.custom-textarea {
+    padding: 1rem 1.25rem;
+}
+
+    .search-input::placeholder,
+    .custom-textarea::placeholder {
+        color: var(--text-placeholder);
+    }
+
+    .search-input:focus,
+    .custom-textarea:focus {
+        outline: none;
+        border-color: var(--bg-accent);
+        box-shadow: 0 0 0 2px rgba(255,122,0,0.4);
+    }
+
+/* ================================
+   Griglie Card
+================================ */
+.vehicle-grid,
+.service-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.field-group:nth-of-type(2) .service-grid {
+    margin-top: 1rem;
+    gap: 2rem;
+}
+
+.field-group:nth-of-type(1) .vehicle-grid {
+    margin-bottom: 2rem;
+}
+
+/* ================================
+   Card Veicolo & Servizio
+================================ */
+.vehicle-card,
+.vehicle-card-add,
+.service-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s;
+    overflow: hidden;
+    padding: 1.25rem;
+    min-width: 240px;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+    .vehicle-card:hover,
+    .service-card:hover,
+    a.vehicle-card-add:hover {
+        background-color: var(--bg-card-hover);
+        border-color: var(--bg-accent);
+    }
+
+    .vehicle-card.selected,
+    .service-card.selected {
+        border: 2px solid var(--bg-accent);
+    }
+
+.vehicle-card-add {
+    border: 2px dashed var(--border);
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-icon {
+    font-size: 1.5rem;
+    color: var(--bg-accent);
+    margin-bottom: 0.75rem;
+}
+
+.card-title,
+.service-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.card-text,
+.service-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+}
+
+.service-meta,
+.qty-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--bg-accent);
+}
+
+.duration,
+.qty {
+    color: var(--text-secondary);
+}
+
+/* ================================
+   Quantità Ricambi
+================================ */
+.qty-controls {
+    gap: 0.75rem;
+}
+
+    .qty-controls button {
+        width: 2rem;
+        height: 2rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 0.25rem;
+        color: var(--text-primary);
+        font-size: 1.125rem;
+        line-height: 1rem;
+        cursor: pointer;
+        transition: background .2s, border-color .2s;
+    }
+
+        .qty-controls button:hover:not(:disabled) {
+            background-color: var(--bg-card-hover);
+            border-color: var(--bg-accent);
+        }
+
+        .qty-controls button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+/* ================================
+   Errori & Messaggi
+================================ */
+.field-error {
+    color: var(--bg-accent);
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+
+.alert-success {
+    padding: 1.25rem 1.5rem;
+    font-size: 1rem;
+    background: #263F2A;
+    border: 1px solid #10B981;
+    color: #A7F3D0;
+    border-radius: 0.5rem;
+    margin-top: 2rem;
+}
+
+/* ================================
+   Azioni & Pulsanti
+================================ */
+.form-actions {
+    text-align: right;
+    margin-top: 2.5rem;
+}
+
+.primary-button {
+    background: var(--bg-accent);
+    color: #FFFFFF;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+    .primary-button:disabled {
+        background: #805000;
+        cursor: not-allowed;
+    }
+
+    .primary-button:not(:disabled):hover {
+        background: #d26500;
+    }
+
+/* ================================
+   Fine
+================================ */
+
+
+.quote-form-wrapper {
+    background-color: var(--bg-page); /* colore sfondo pagina */
+    padding-top: 2rem; /* meno padding sopra */
+    padding-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+
+.quote-header {
+    display: flex;
+    align-items: center; /* centra verticalmente rispetto al contenitore */
+    height: 100px; /* o il valore necessario per l'altezza che desideri */
+    margin-bottom: 0rem; /* spazio sotto al titolo */
+    
+}
+
+.page-title {
+    margin: 0; /* rimuove margini che sballano il centramento */
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: var(--bg-accent);
+    margin-top: 3rem;
+}

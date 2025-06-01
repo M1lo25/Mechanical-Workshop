@@ -1,0 +1,596 @@
+﻿
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --black: #111;
+    --dark: #1b1b1b;
+    --light: #f5f5f5;
+    --accent: #CC5500;
+    --font-sans: 'DM Sans', sans-serif;
+    --font-heading: 'Oswald', sans-serif;
+}
+
+body {
+    font-family: var(--font-sans);
+    color: var(--light);
+    background-color: var(--black);
+}
+
+.container {
+    width: min(90%, 1200px);
+    margin: 0 auto;
+}
+
+/* ========== Navbar Container ========== */
+.navbar {
+    position: relative;
+    padding: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: var(--dark);
+}
+
+    .navbar .container {
+        width: 100%;
+        margin: 0;
+        padding: 0 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 2rem;
+    }
+
+    /* ========== Logo ========== */
+    .navbar .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+        .navbar .logo img.logo-img {
+            max-height: 90px;
+        }
+
+        .navbar .logo .logo-text {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--light);
+            position: relative;
+            top: -0.2rem;
+        }
+
+    /* ========== Nav Links ========== */
+    .navbar .nav-links {
+        display: flex;
+        gap: 2rem;
+        font-size: 1.1rem;
+        /* CENTRATURA ORIZZONTALE nel container */
+        margin: 0 auto;
+    }
+
+        .navbar .nav-links a {
+            color: var(--light);
+            font-weight: 700;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+            .navbar .nav-links a:hover {
+                color: var(--accent);
+            }
+
+            .navbar .nav-links a.active {
+                color: #A34700; /* arancio scuro */
+            }
+
+                .navbar .nav-links a.active:hover {
+                    color: var(--accent);
+                }
+
+    /* ========== Icone a Destra ========== */
+    .navbar .icone {
+        display: flex;
+        align-items: center;
+        gap: 1rem; /* spazio tra lingua, profilo e logout */
+        margin-left: auto; /* spinge tutto verso destra */
+    }
+
+/* Wrapper user-actions (profilo + logout) */
+.auth-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.20rem;
+}
+
+/* ========== Pulsanti Icona ========== */
+.navbar .icone .icona {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    font-size: 1.7rem;
+    background: transparent; /* rimuove sfondo bianco */
+    border: none;
+    padding: 0;
+    line-height: 1;
+    color: var(--accent) !important;
+    opacity: 0.9;
+    transition: opacity 0.2s, transform 0.2s;
+    margin-right: 1rem;
+}
+
+    .navbar .icone .icona:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    /* Rimuove il margin-right dall’ultima icona (logout) */
+    .navbar .icone .icona:last-child {
+        margin-right: 0 !important;
+    }
+
+/* ========== Logout Form ========== */
+.logout-form {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+/* ========== Selettore Lingua ========== */
+.language-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    margin-right: 1rem;
+    /* width/height lasciati auto per il contenuto */
+}
+
+.flag-icon {
+    width: 24px;
+    height: 16px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.lang-code {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--light);
+    text-transform: uppercase;
+}
+
+.chevron-icon {
+    font-size: 0.8rem;
+    color: var(--light);
+}
+
+.language-switcher:hover .chevron-icon {
+    color: var(--accent);
+}
+
+
+.hero {
+    position: relative;
+    height: 80vh;
+    background-position: center;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+}
+
+.hero-content {
+    position: relative;
+    text-align: center;
+    max-width: 800px;
+    padding: 0 1rem;
+}
+
+    .hero-content h1 {
+        font-family: var(--font-heading);
+        font-size: clamp(2.5rem, 8vw, 5rem);
+        line-height: 1.1;
+        margin-bottom: 1rem;
+    }
+
+.hero-subtitle {
+    font-family: var(--font-sans);
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.85;
+}
+
+.btn-primary {
+    display: inline-block;
+    padding: .75rem 2rem;
+    background-color: var(--accent);
+    color: var(--light);
+    text-decoration: none;
+    font-weight: 700;
+    border-radius: 2rem;
+    transition: background-color .2s, transform .2s;
+}
+
+    .btn-primary:hover {
+        background-color: #e34900;
+        transform: translateY(-2px);
+    }
+
+.services {
+    padding: 3rem 0;
+    text-align: center;
+}
+
+    .services h2 {
+        font-family: var(--font-heading);
+        font-size: 2.5rem;
+    }
+
+    .services .cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        justify-content: center;
+    }
+
+    .services .card {
+        position: relative;
+        background-color: var(--dark);
+        border-radius: .5rem;
+        overflow: hidden;
+        width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        transition: transform .3s, box-shadow .3s;
+    }
+
+        .services .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+        }
+
+.card-img {
+    width: 100%;
+    height: 180px;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.7);
+    transition: filter .3s;
+}
+
+.services .card:hover .card-img {
+    filter: brightness(0.9);
+}
+
+.services .card h3 {
+    margin: 1rem 0 .5rem;
+    font-family: var(--font-heading);
+}
+
+.services .card p {
+    padding: 0 1rem 1rem;
+    font-size: .95rem;
+    opacity: .85;
+}
+
+.static-gallery {
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center; /* centra le figure */
+}
+
+    .static-gallery .gallery-item {
+        /* stessa logica di larghezza delle immagini, ma sul container */
+        flex: 0 0 calc((100% - (0.5rem * 2)) / 3);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .static-gallery img {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        display: block;
+    }
+
+    .static-gallery figcaption {
+        margin-top: 0.7rem;
+        padding-top: 0.75rem;
+        font-size: 0.9rem;
+        color: #e6e6e6;
+        text-align: center;
+        line-height: 1.3;
+        /* Nuovi stili */
+        font-variant: small-caps; /* lettere maiuscole ma più leggere */
+        font-style: italic; /* corsivo delicato */
+        font-weight: 300; /* peso più sottile */
+        letter-spacing: 0.05em; /* spazio tra le lettere */
+    }
+
+.features {
+    padding-top: 0;
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+    background: var(--dark);
+    padding-bottom: 0rem;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+}
+
+.features-list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.feature {
+    /* larghezza di base: (100% - 2*gap) / 3 */
+    flex: 1 1 calc((100% - 2rem) / 6);
+    background: var(--dark);
+    padding: 1.5rem;
+    transition: transform .2s, box-shadow .2s;
+}
+
+    .feature:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+    }
+
+    .feature i {
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+    }
+
+    .feature h4 {
+        font-family: var(--font-heading);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        color: var(--light);
+    }
+
+    .feature p {
+        font-size: 0.9rem;
+        color: var(--light);
+        opacity: 0.8;
+    }
+
+.testimonials {
+    background-color: var(--dark);
+    padding: 3rem 0;
+    text-align: center;
+    overflow: auto;
+    margin-top: 6rem;
+}
+
+    .testimonials h2 {
+        font-family: var(--font-heading);
+        font-size: 2.5rem;
+    }
+
+    .testimonials .testi-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        justify-content: center;
+    }
+
+    .testimonials .testi-item {
+        background-color: var(--dark);
+        padding: 1.5rem;
+        border-radius: .5rem;
+        display: flex;
+        align-items: center;
+        max-width: 500px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+.avatar-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 1rem;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+.testo p {
+    font-style: italic;
+    margin-bottom: .5rem;
+}
+
+.nome {
+    font-weight: 700;
+    font-size: .9rem;
+    color: var(--accent);
+}
+
+.footer {
+    background-color: var(--dark);
+    color: var(--light);
+    margin-top: 7rem;
+    padding: 2rem 0;
+    text-align: center;
+}
+
+.footer-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 0 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer-col {
+    flex: 1 1 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer-logo-img {
+    width: 80px;
+    height: auto;
+}
+
+.footer-logo-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.footer-logo-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #CC5500;
+    white-space: nowrap;
+}
+
+.footer-piva {
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+.footer-contact h4 {
+    font-family: var(--font-heading);
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.footer-contact p {
+    font-size: 1.2rem;
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+.footer-social h4 {
+    font-family: var(--font-heading);
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.social-icons {
+    display: flex;
+    gap: 1rem;
+}
+
+    .social-icons a {
+        color: var(--light);
+        font-size: 1.60rem;
+        transition: color .2s;
+    }
+
+        .social-icons a:hover {
+            color: var(--accent);
+        }
+
+.footer-hours h4 {
+    font-family: var(--font-heading);
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.footer-hours p {
+    font-size: 1.2rem;
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+.footer-legal {
+    background-color: #0d0d0d;
+    padding: 1rem 0;
+    font-size: 0.8rem;
+    opacity: 1;
+}
+
+    .footer-legal .container {
+        text-align: left;
+        max-width: none;
+        margin: 0;
+        padding: 0 2rem;
+    }
+
+    .footer-legal a {
+        color: #bbb;
+        text-decoration: none;
+        margin-right: 0.5rem;
+        transition: color .2s;
+    }
+
+        .footer-legal a:hover {
+            color: #fff;
+        }
+
+    .footer-legal p {
+        display: inline-block;
+    }
+
+        .footer-legal p a + a::before {
+            display: inline-block;
+            margin: 0 0.5rem;
+            color: #555;
+        }
+
+
+
+/* 1) Il wrapper principale diventa un flex container verticale */
+.layout-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* 2) Qui racchiudi header + sidebar + main content in un sub-wrapper */
+.main-content {
+    display: flex; /* sidebar + main side by side */
+    flex: 1; /* occupa lo spazio centrale */
+}
+
+/* 3) Il footer viene spinto in fondo */
+.footer {
+    /* rimuovi margin-top se c’era */
+    margin-top: auto;
+    /* mantiene il tuo styling esistente */
+    background-color: var(--dark);
+    color: var(--light);
+    padding: 2rem 0;
+    text-align: center;
+}
+
+
+
+section.container {
+    margin: 4rem auto; /* margine verticale uniforme */
+    padding: 2rem; /* se vuoi usare padding invece di margin per lo spacing */
+}

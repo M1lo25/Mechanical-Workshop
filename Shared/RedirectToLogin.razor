@@ -1,0 +1,15 @@
+﻿@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        // 1. Ricava il percorso relativo corrente senza slash iniziale
+        var relative = Nav.ToBaseRelativePath(Nav.Uri);
+
+        // 2. Aggiungi lo slash davanti per renderlo assoluto
+        var returnUrl = "/" + relative;
+
+        // 3. Escape e naviga verso /login?returnUrl=/il-tuo-percorso
+        Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", true);
+    }
+}

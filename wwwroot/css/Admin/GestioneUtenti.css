@@ -1,0 +1,270 @@
+﻿a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.au-card {
+    background-color: #2c2c2c;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    margin: 1rem;
+    overflow: hidden;
+}
+
+.au-card-body--flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    align-items: flex-end;
+    background-color: #1f1f1f;
+}
+
+.au-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.au-form-group--fill {
+    flex: 1;
+}
+
+.au-form-group--small {
+    width: 200px;
+}
+
+.au-form-label {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: #bbb;
+}
+
+.au-form-input,
+.au-form-select {
+    background: #1f1f1f;
+    border: 1px solid #2c2c2c;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    color: #eee;
+    font-size: 0.9rem;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+    .au-form-input:focus,
+    .au-form-select:focus {
+        outline: none;
+        border-color: #CC5500 !important;
+        background: #2c2c2c;
+    }
+
+.au-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 0.3rem;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.au-btn--primary,
+.au-btn--sm {
+    background-color: #CC5500 !important;
+    color: #1f1f1f !important;
+}
+
+    .au-btn--primary:hover,
+    .au-btn--sm:hover {
+        background-color: #e07a3e !important;
+        transform: translateY(-1px);
+    }
+
+.au-btn--add {
+    height: 2.5rem;
+}
+
+.au-btn--danger {
+    background-color: #c0392b;
+    color: #fff;
+    border-color: #CC5500 !important;
+}
+
+    .au-btn--danger:hover {
+        background-color: #a93226;
+    }
+
+.au-card--table {
+    display: flex;
+    flex-direction: column;
+}
+
+.au-card-header--table {
+    background-color: #CC5500 !important;
+    color: #1f1f1f;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .au-card-header--table .au-card-title {
+        color: #ffffff !important;
+    }
+
+.au-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+    .au-card-title i,
+    .au-btn--danger i {
+        color: #CC5500 !important;
+    }
+
+.au-table-search {
+    width: 250px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.25rem;
+    border: 1px solid #2c2c2c;
+    background: #1f1f1f;
+    color: #eee;
+}
+
+    .au-table-search:focus {
+        border-color: #CC5500 !important;
+    }
+
+.au-card-body--table {
+    overflow-x: auto;
+    background: #2c2c2c;
+}
+
+.au-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #eee;
+}
+
+.au-table-head th,
+.au-table-body td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.au-table-head th {
+    background-color: #1f1f1f;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.au-table-body tr:nth-child(even) {
+    background: #2c2c2c;
+}
+
+.au-table-body tr:nth-child(odd) {
+    background: #1f1f1f;
+}
+
+.au-td {
+    border-bottom: 1px solid #2c2c2c;
+    font-size: 0.9rem;
+}
+
+.au-td--actions {
+    text-align: center;
+    width: 100px;
+}
+
+.au-td--id {
+    text-align: center;
+    width: 50px;
+}
+
+.au-td--username {
+    min-width: 120px;
+}
+
+.au-td--email {
+    min-width: 180px;
+}
+
+.au-td--role {
+    min-width: 100px;
+}
+
+.au-td--date {
+    min-width: 120px;
+}
+
+.au-card--form {
+    margin-top: 3rem;
+}
+
+.au-card-footer--table {
+    background: #1f1f1f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1rem;
+}
+
+.au-pagination-info {
+    font-size: 0.85rem;
+    color: #bbb;
+}
+
+.au-pagination {
+    display: flex;
+}
+
+.au-pagination-list {
+    list-style: none;
+    display: flex;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+}
+
+.au-page-item {
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.au-page-link {
+    display: block;
+    padding: 0.4rem 0.8rem;
+    background: #2c2c2c;
+    color: #eee;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+    .au-page-link:hover:not(:disabled) {
+        background: #CC5500 !important;
+        color: #1f1f1f !important;
+    }
+
+.au-page-item--active .au-page-link {
+    background-color: #CC5500 !important;
+    color: #1f1f1f !important;
+}
+
+.au-page-item--disabled .au-page-link {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.status-badge.in-attesa {
+    background: #CC5500 !important;
+    color: #fff !important;
+}
+
+.au-td--actions button .fas.fa-trash-alt {
+    color: #2c2c2c !important;
+}
+
+.au-td--actions button:hover .fas.fa-trash-alt {
+    color: #eee !important;
+}

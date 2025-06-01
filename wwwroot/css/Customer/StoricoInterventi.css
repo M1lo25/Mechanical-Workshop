@@ -1,0 +1,352 @@
+﻿/* animazione fadeInUp */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.storico-interventi-page {
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: var(--bg-panel); /* nero di sfondo */
+    color: #ddd; /* testo chiaro */
+}
+
+/* =========== FILTRI =========== */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.filter--search,
+.filter--vehicle,
+.filter--date {
+    flex: 1 1 200px;
+}
+
+.filter-input,
+.filter-select {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #444;
+    border-radius: 0.4rem;
+    font-size: 1rem;
+}
+
+.filter-button {
+    padding: 0.6rem 1.2rem;
+    background-color: #CC5000;
+    border: none;
+    border-radius: 0.4rem;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+    .filter-button:hover {
+        background-color: #e65c1a;
+        transform: translateY(-1px);
+    }
+
+/* =========== ELENCO INTERVENTI =========== */
+/* aumenta lo spazio sotto l'intervento-list */
+.interventi-list {
+    margin-bottom: 3rem; /* regola qui a piacere */
+}
+
+
+.interventi-list__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-card);
+    color: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 0.4rem 0.4rem 0 0;
+    border-left: 6px solid #CC5000;
+    margin-bottom: 0.5rem;
+}
+
+    .interventi-list__header h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        text-transform: uppercase;
+    }
+
+.interventi-list__count {
+    font-size: 0.9rem;
+    background-color: rgba(255,255,255,0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+}
+
+/* =========== CARDS INTERVENTO =========== */
+.intervento-card {
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 0.4rem;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease both;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .intervento-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+
+.intervento-card__main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+}
+
+.intervento-card__title {
+    margin: 0 0 0.3rem;
+    font-size: 1.2rem;
+    color: #CC5000;
+}
+
+.intervento-card__info {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #ccc;
+}
+
+.intervento-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.badge-completed {
+    background-color: #1cc88a;
+    color: #fff;
+    border-radius: 5rem;
+    padding: 0.3em 0.7em;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.toggle-details {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: transform 0.2s;
+}
+
+    .toggle-details:hover {
+        transform: rotate(90deg);
+    }
+
+.icon-chevron {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    /* qui metterai il tuo SVG o font-icon */
+}
+
+.intervento-card__details {
+    background-color: #1a1a1a;
+    border-top: 1px solid #333;
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #ddd;
+}
+
+/* =========== PAGINAZIONE =========== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.page-btn {
+    padding: 0.5rem 0.85rem;
+    border: 1px solid #444;
+    border-radius: 0.4rem;
+    background-color: #111;
+    color: #ddd;
+    cursor: pointer;
+    min-width: 2.75rem;
+    text-align: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+    .page-btn:hover:not(:disabled) {
+        background-color: #222;
+    }
+
+    .page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .page-btn.active {
+        background-color: #CC5000;
+        color: #fff;
+        border-color: #CC5000;
+    }
+
+/* =========== SEZIONE “I MIEI VEICOLI” =========== */
+.vehicles-section__header {
+    background-color: #222;
+    color: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 0.4rem 0.4rem 0 0;
+    border-left: 6px solid #CC5000;
+    margin-bottom: 0.5rem;
+}
+
+    .vehicles-section__header h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        text-transform: uppercase;
+    }
+
+.vehicles-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+    gap: 1.25rem;
+}
+
+.vehicle-card {
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 0.4rem;
+    padding: 1.25rem;
+    animation: fadeInUp 0.5s ease both;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .vehicle-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+
+.vehicle-card__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+    color: #CC5000;
+}
+
+.vehicle-card__info {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #ccc;
+}
+
+    .vehicle-card__info li + li {
+        margin-top: 0.4rem;
+    }
+
+
+
+
+
+
+
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background-color: #1e1e1e;
+    padding: 1rem;
+    border-radius: 8px;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.filter--search,
+.filter--vehicle,
+.filter--date,
+.filter--action {
+    flex: 1 1 180px;
+    min-width: 150px;
+}
+
+.filter-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    background-color: #2c2c2c;
+    color: #ffffff;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+    .filter-input::placeholder {
+        color: #aaaaaa;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #ff6600;
+        background-color: #333333;
+    }
+
+.filter-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    background-color: #2c2c2c;
+    color: #ffffff;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23ffffff' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 6.646a.5.5 0 0 1 .708 0L8 9.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.8rem;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #ff6600;
+        background-color: #333333;
+    }
+
+.filter-button {
+    width: 100%;
+    padding: 0.55rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #ff6600;
+    border: 1px solid #ff6600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+    .filter-button:hover,
+    .filter-button:focus {
+        background-color: #e65c00;
+        border-color: #e65c00;
+        outline: none;
+    }
