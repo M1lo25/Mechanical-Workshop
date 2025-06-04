@@ -144,10 +144,12 @@
                 <div>@(v.Chilometraggio?.ToString("N0") ?? "-") km</div>
             </div>
             <div class="mv-cell--actions">
-                <button class="mv-action mv-action--view" title="Visualizza">
+                <button class="mv-action mv-action--view" title="Visualizza"
+                        @onclick="() => ViewVehicle(v.VehicleId)">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button class="mv-action mv-action--edit" title="Modifica">
+                <button class="mv-action mv-action--edit" title="Modifica"
+                        @onclick="() => EditVehicle(v.VehicleId)">
                     <i class="fas fa-edit"></i>
                 </button>
                 <AuthorizeView Roles="Admin">
@@ -164,25 +166,22 @@
     }
 </div>
 
-<!-- FOOTER -->
 <footer class="footer">
     <div class="container footer-main">
         <div class="footer-col footer-logo">
             <div class="footer-logo-brand">
                 <img src="/Images/Index/LogoHome.png" alt="Logo Officina" class="footer-logo-img" />
-                <span class="footer-logo-text">Officina<br />Meccanica<br /> Milani</span>
+                <span class="footer-logo-text">Officina<br />Meccanica<br />Milani</span>
             </div>
             <p class="footer-piva">P.IVA: 01234567890</p>
         </div>
 
-        <!-- Colonna 2: sede e contatti -->
         <div class="footer-col footer-contact">
             <h4>Sede e Contatti</h4>
             <p>Via dell'Elce di Sotto, 25<br />06123 Perugia (PG)</p>
             <p>Tel. +39 075 69409632<br />info@officinamilani.it</p>
         </div>
 
-        <!-- Colonna 3: orari di apertura -->
         <div class="footer-col footer-hours">
             <h4>Orari di Apertura</h4>
             <p>
@@ -192,7 +191,6 @@
             </p>
         </div>
 
-        <!-- Colonna 4: social + WhatsApp -->
         <div class="footer-col footer-social">
             <h4>Seguici</h4>
             <div class="social-icons">
@@ -203,15 +201,6 @@
         </div>
     </div>
 </footer>
-<!-- Riga note legali -->
-<div class="footer-legal">
-    <div class="container">
-        <p>
-            <a href="/privacy">Privacy Policy</a> |
-            <a href="/cookie">Cookie Policy</a> |
-        </p>
-    </div>
-</div>
 
 @code {
     // — Statistiche —
@@ -234,7 +223,7 @@
     private string searchTerm = "";
     private string statusFilter = "";
 
-    // — Meccanico ID —
+    // — Meccanico ID (claim) —
     private int MechanicId;
 
     protected override async Task OnInitializedAsync()
@@ -249,12 +238,13 @@
         PendingVehiclesCount = await VeicoloService.GetPendingVehiclesCountForMechanicAsync(idClaim);
         PendingQuotesCount = await QuoteService.GetPendingQuotesCountForMechanicAsync(idClaim);
 
+        // Non cambia: ottengo tutti i veicoli con informazioni utente
         vehicles = await VeicoloService.GetAllWithCustomerAsync();
     }
 
     private void ApplyFilter()
     {
-        // Il binding e la property filteredVehicles riflettono automaticamente il filtro
+        // data-binding su filteredVehicles gestisce il filtro automaticamente
     }
 
     private string GetBadgeClass(string stato) =>
@@ -272,19 +262,23 @@
 
     private async Task OnDeleteVehicle(int vehicleId)
     {
-        // 1) chiedi conferma all’utente
+        // 1) Recupero userId (claim) dal contesto Blazor
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return; // non autenticato, interrompo
+
+        // 2) Conferma JavaScript
         var ok = await JS.InvokeAsync<bool>("confirm",
             "Sei sicuro di voler eliminare questo veicolo?");
         if (!ok)
             return;
 
-        // 2) chiama il service
-        await VeicoloService.DeleteVehicleAsync(vehicleId);
-        // oppure await VeicoloService.DeleteAsync(vehicleId);
+        // 3) Chiamo il servizio passando userId + vehicleId
+        await VeicoloService.DeleteAsync(userId, vehicleId);
 
-        // 3) aggiorna la lista in pagina
+        // 4) Aggiorno la lista in pagina
         vehicles.RemoveAll(v => v.VehicleId == vehicleId);
         StateHasChanged();
     }
-
 }

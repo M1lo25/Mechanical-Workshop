@@ -28,31 +28,24 @@ namespace BlazorOfficina.Services
             _http = http ?? throw new ArgumentNullException(nameof(http));
         }
 
-        public async Task<VeicoloDto> CreaVeicoloAsync(AggiungiVeicoloDto dto)
+        public async Task<VeicoloDto> CreaVeicoloAsync(string userId, AggiungiVeicoloDto dto)
         {
-            var entity = _mapper.Map<Veicolo>(dto);
-
-            var claim = _http.HttpContext?
-                .User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                ?? throw new InvalidOperationException("Utente non autenticato.");
-            if (!int.TryParse(claim, out var userId))
+            if (!int.TryParse(userId, out var uid))
                 throw new InvalidOperationException("Utente non autenticato.");
 
-            entity.UtenteId = userId;
+            var entity = _mapper.Map<Veicolo>(dto);
+            entity.UtenteId = uid;
+
             _db.Veicoli.Add(entity);
             await _db.SaveChangesAsync();
 
             return _mapper.Map<VeicoloDto>(entity);
         }
-
         public async Task<VeicoloDto?> GetByIdAsync(int id)
         {
-            var v = await _db.Veicoli
-                             .AsNoTracking()
-                             .FirstOrDefaultAsync(x => x.Id == id);
-            return v is null
-                ? null
-                : _mapper.Map<VeicoloDto>(v);
+            var v = await _db.Veicoli.FindAsync(id);
+            if (v is null) return null;
+            return _mapper.Map<VeicoloDto>(v);
         }
 
         public async Task<int> GetRegisteredVehiclesCountAsync(string userId)
@@ -94,9 +87,9 @@ namespace BlazorOfficina.Services
                     DataInizio = v.DataInizio,
                     DataPrevisto = v.DataPrevisto,
                     UltimoIntervento = v.Riparazioni
-                                               .OrderByDescending(r => r.DataProntoRitiro)
-                                               .Select(r => r.DataProntoRitiro)
-                                               .FirstOrDefault(),
+                           .OrderByDescending(r => r.DataProntoRitiro)
+                           .Select(r => r.DataProntoRitiro)
+                           .FirstOrDefault(),
                     SpesaTotale = v.Riparazioni.Sum(r => r.Costo)
                 })
                 .ToListAsync();
@@ -169,15 +162,17 @@ namespace BlazorOfficina.Services
                 .ToListAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(string userId, int id)
         {
+            // opzionalmente: controlla se (v.UtenteId == userId) -> autorizzazione
             var entity = await _db.Veicoli.FindAsync(id)
                          ?? throw new KeyNotFoundException($"Veicolo {id} non trovato");
             _db.Veicoli.Remove(entity);
             await _db.SaveChangesAsync();
         }
 
-        public Task DeleteVehicleAsync(int id)
-            => DeleteAsync(id);
+        public Task DeleteVehicleAsync(string userId, int id)
+            => DeleteAsync(userId, id);
+
     }
 }

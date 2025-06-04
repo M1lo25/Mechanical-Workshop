@@ -2,8 +2,12 @@
 @attribute [Authorize(Roles = "Customer")]
 @using BlazorOfficina.Data.Models
 @using BlazorOfficina.Data.Dtos
+@using System.Security.Claims
 @inject IVeicoloService VeicoloService
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+
 
 <header class="navbar">
     <div class="container">
@@ -284,10 +288,23 @@
 
     private async Task OnSubmit()
     {
-        await VeicoloService.CreaVeicoloAsync(dto);
+        // 1) Recupero lo stato di autenticazione
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            // Se per qualche motivo non trovi il claim, interrompi o mostra un messaggio
+            // (ad es. potresti fare un Nav.NavigateTo("/login") o simile)
+            return;
+        }
+
+        // 2) Chiamo il servizio passando userId + dto
+        await VeicoloService.CreaVeicoloAsync(userId, dto);
+
+        // 3) Redirect alla pagina "Le tue auto"
         Nav.NavigateTo("/customer/vehicles");
     }
-
 
     private string GetVehicleIcon(CategoriaVeicolo tipo) => tipo switch
     {
@@ -298,3 +315,4 @@
         _ => "fas fa-question-circle"
     };
 }
+

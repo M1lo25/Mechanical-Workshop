@@ -96,8 +96,8 @@
                             <p>
                                 <i class="fas fa-euro-sign"></i>
                                 @(v.SpesaTotale > 0
-                                  ? v.SpesaTotale.ToString("N2")
-                                  : "0,00")
+                                    ? v.SpesaTotale.ToString("N2")
+                                    : "0,00")
                             </p>
                         </div>
                         <div class="veh-card__footer">
@@ -108,8 +108,8 @@
                                 <i class="fas fa-calendar-plus"></i> Prenota
                             </a>
                             <a class="veh-btn-delete"
-                                    title="Elimina veicolo"
-                                    @onclick="() => DeleteVehicle(v.Id)">
+                               title="Elimina veicolo"
+                               @onclick="() => DeleteVehicle(v.Id)">
                                 <i class="fas fa-trash"></i>
                             </a>
                         </div>
@@ -227,28 +227,39 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // 1) Recupero auth state + userId
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         userId = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        // 2) Se userId è valido, chiamo il servizio
         if (!string.IsNullOrEmpty(userId))
             vehicles = await VehicleService.GetUserVehiclesAsync(userId);
+
         isLoading = false;
     }
 
-    private void AddVehicle() =>
-      NavigationManager.NavigateTo("/customer/addVehicle");
+    private async Task DeleteVehicle(int id)
+    {
+        if (string.IsNullOrEmpty(userId))
+            return;
+
+        // 1) Chiedo conferma all’utente
+        var ok = await JSRuntime.InvokeAsync<bool>("confirm", new[] { $"Eliminare veicolo #{id}?" });
+        if (!ok) return;
+
+        // 2) Passo userId + id al servizio
+        await VehicleService.DeleteAsync(userId, id);
+
+        // 3) Ricarico la lista
+        vehicles = await VehicleService.GetUserVehiclesAsync(userId);
+    }
+
+    private void AddVehicle()
+    {
+        NavigationManager.NavigateTo("/customer/addVehicle");
+    }
 
     private void ShowDetails(int id) =>
       NavigationManager.NavigateTo($"/customer/vehicles/{id}");
 
-    private async Task DeleteVehicle(int id)
-    {
-        var ok = await JSRuntime.InvokeAsync<bool>(
-          "confirm",
-          new object?[] { $"Elimini il veicolo #{id}?" }
-        );
-        if (!ok) return;
-
-        await VehicleService.DeleteAsync(id);
-        vehicles = await VehicleService.GetUserVehiclesAsync(userId!);
-    }
 }
